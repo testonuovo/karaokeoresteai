@@ -1,0 +1,2162 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karaoke Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+           h1{
+             color:blue;
+             }
+            h2{
+           color:red;
+           }
+           @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+            100% { transform: translateY(-5px); }
+           }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            90% { transform: scale(1.10); }
+            100% { transform: scale(1); }
+        }
+        
+        .bounce { animation: bounce 2s infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        .pulse { animation: pulse 0.3s ease-in-out; }
+        
+        .lyrics-line {
+            transition: all 0.3s ease;
+        }
+        
+        .active-line {
+            color: #fbbf24;
+            font-weight: bold;
+            transform: scale(1.1);
+        }
+        
+        .microphone {
+            background-color:red;
+        }
+        
+        .stage {
+            background:blue;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <div class="stage p-6 text-center">
+        <h1 class="text-4xl font-bold mb-2 bounce">🎤 karaoke game🎵</h1>
+        <div class="flex justify-center items-center space-x-8">
+            <div class="bg-white/20 rounded-lg p-3">
+                <span class="text-sm">Punteggio</span>
+                <div id="score" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="bg-white/20 rounded-lg p-3">
+                <span class="text-sm">Combo</span>
+                <div id="combo" class="text-2xl font-bold">0x</div>
+            </div>
+            <div class="bg-white/20 rounded-lg p-3">
+                <span class="text-sm">Tempo</span>
+                <div id="timer" class="text-2xl font-bold">0:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Song Selection -->
+    <div id="songSelection" class="max-w-4xl mx-auto p-6">
+        <h2 class="text-2xl font-bold mb-6 text-center">Scegli la tua canzone</h2>
+        
+        <!-- Search Section -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-bold mb-4 text-center">🔍 Cerca nuove canzoni online</h3>
+            <div class="flex gap-4 mb-4">
+                <input type="text" id="searchInput" placeholder="Cerca artista e titolo (es: Ed Sheeran Perfect)" 
+                       class="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
+                <button onclick="searchSongs()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-bold transition-colors">
+                    🔍 Cerca
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm text-gray-400 mb-2">💡 Suggerimenti di ricerca:</p>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="quickSearch('Queen')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Queen</button>
+                    <button onclick="quickSearch('Beatles')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Beatles</button>
+                    <button onclick="quickSearch('Laura Pausini')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Laura Pausini</button>
+                    <button onclick="quickSearch('Max Pezzali')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Max Pezzali</button>
+                    <button onclick="quickSearch('Gigi D\'Alessio')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Gigi D'Alessio</button>
+                    <button onclick="quickSearch('Tiziano Ferro')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Tiziano Ferro</button>
+                    <button onclick="quickSearch('883')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">883</button>
+                    <button onclick="quickSearch('Måneskin')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Måneskin</button>
+                    <button onclick="quickSearch('Raf')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Raf</button>
+                    <button onclick="quickSearch('Fabrizio Moro')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Fabrizio Moro</button>
+                    <button onclick="quickSearch('Vasco Rossi')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Vasco Rossi</button>
+                    <button onclick="quickSearch('Ligabue')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Ligabue</button>
+                    <button onclick="quickSearch('Zucchero')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Zucchero</button>
+                    <button onclick="quickSearch('Eros Ramazzotti')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Eros Ramazzotti</button>
+                    <button onclick="quickSearch('Lucio Battisti')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Lucio Battisti</button>
+                    <button onclick="quickSearch('Francesco De Gregori')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">De Gregori</button>
+                </div>
+            </div>
+            <div id="searchResults" class="grid md:grid-cols-2 gap-3 max-h-60 overflow-y-auto"></div>
+            <div id="searchStatus" class="text-center text-gray-400 mt-4"></div>
+        </div>
+
+        <!-- Default Songs -->
+        <h3 class="text-xl font-bold mb-4 text-center">🎵 Canzoni predefinite</h3>
+        <div class="grid md:grid-cols-3 gap-4">
+            <div class="song-card bg-gradient-to-r from-purple-600 to-pink-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('bella-ciao')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Bella Ciao</h3>
+                <p class="text-sm opacity-80">Canzone tradizionale italiana</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-blue-600 to-teal-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('happy-birthday')">
+                <h3 class="text-xl font-bold mb-2">🎂 Happy Birthday</h3>
+                <p class="text-sm opacity-80">Classico internazionale</p>
+                <div class="mt-3 text-yellow-300">★★☆☆☆ Molto Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-red-600 to-orange-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('imagine')">
+                <h3 class="text-xl font-bold mb-2">🌍 Imagine</h3>
+                <p class="text-sm opacity-80">John Lennon - Classico</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-green-600 to-emerald-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('volare')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Volare</h3>
+                <p class="text-sm opacity-80">Domenico Modugno</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-yellow-600 to-amber-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('bohemian-rhapsody')">
+                <h3 class="text-xl font-bold mb-2">👑 Bohemian Rhapsody</h3>
+                <p class="text-sm opacity-80">Queen - Rock Epic</p>
+                <div class="mt-3 text-yellow-300">★★★★★ Difficile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('let-it-be')">
+                <h3 class="text-xl font-bold mb-2">🎸 Let It Be</h3>
+                <p class="text-sm opacity-80">The Beatles</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-pink-600 to-rose-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('la-vie-en-rose')">
+                <h3 class="text-xl font-bold mb-2">🇫🇷 La Vie En Rose</h3>
+                <p class="text-sm opacity-80">Édith Piaf - Francese</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-cyan-600 to-blue-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('despacito')">
+                <h3 class="text-xl font-bold mb-2">🇪🇸 Despacito</h3>
+                <p class="text-sm opacity-80">Luis Fonsi - Reggaeton</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-teal-600 to-green-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('wonderwall')">
+                <h3 class="text-xl font-bold mb-2">🎵 Wonderwall</h3>
+                <p class="text-sm opacity-80">Oasis - Brit Rock</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-orange-600 to-red-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('gli-anni')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Gli Anni</h3>
+                <p class="text-sm opacity-80">Max Pezzali - Pop Rock</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-violet-600 to-purple-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('non-dirgli-mai')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Non Dirgli Mai</h3>
+                <p class="text-sm opacity-80">Gigi D'Alessio - Pop</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-rose-600 to-pink-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('strani-amori')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Strani Amori</h3>
+                <p class="text-sm opacity-80">Laura Pausini - Ballad</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-red-600 to-orange-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('perdono')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Perdono</h3>
+                <p class="text-sm opacity-80">Tiziano Ferro - Pop</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('rosso-relativo')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Rosso Relativo</h3>
+                <p class="text-sm opacity-80">Tiziano Ferro - Pop</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-gray-600 to-slate-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('sere-nere')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Sere Nere</h3>
+                <p class="text-sm opacity-80">Tiziano Ferro - Pop</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-emerald-600 to-teal-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('il-regalo-piu-grande')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Il Regalo Più Grande</h3>
+                <p class="text-sm opacity-80">Tiziano Ferro - Ballad</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-blue-600 to-cyan-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('self-control')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Self Control</h3>
+                <p class="text-sm opacity-80">Raf - New Wave</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-purple-600 to-violet-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('ti-pretendo')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Ti Pretendo</h3>
+                <p class="text-sm opacity-80">Raf - Pop Rock</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-red-600 to-pink-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('cosa-restera-degli-anni-80')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Cosa Resterà degli Anni '80</h3>
+                <p class="text-sm opacity-80">Raf - Pop</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-green-600 to-teal-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('gente-di-mare')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Gente di Mare</h3>
+                <p class="text-sm opacity-80">Raf & Umberto Tozzi - Pop</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-orange-600 to-yellow-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('infinito')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Infinito</h3>
+                <p class="text-sm opacity-80">Raf - Ballad</p>
+                <div class="mt-3 text-yellow-300">★★★☆☆ Facile</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-slate-600 to-gray-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('pensa')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Pensa</h3>
+                <p class="text-sm opacity-80">Fabrizio Moro - Rock</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-red-600 to-orange-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('portami-via')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Portami Via</h3>
+                <p class="text-sm opacity-80">Fabrizio Moro - Rock</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+            <div class="song-card bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-lg cursor-pointer hover:scale-105 transition-transform" onclick="selectSong('non-me-ne-frega-niente')">
+                <h3 class="text-xl font-bold mb-2">🇮🇹 Non Me Ne Frega Niente</h3>
+                <p class="text-sm opacity-80">Fabrizio Moro - Rock</p>
+                <div class="mt-3 text-yellow-300">★★★★☆ Medio</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Area -->
+    <div id="gameArea" class="hidden max-w-4xl mx-auto p-6">
+        <!-- Progress Bar -->
+        <div class="mb-6">
+            <div class="bg-gray-700 rounded-full h-3">
+                <div id="progressBar" class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Current Song Info -->
+        <div class="text-center mb-6">
+            <h2 id="currentSong" class="text-2xl font-bold mb-2"></h2>
+            <div id="songStatus" class="text-lg text-yellow-400">Preparati a cantare!</div>
+        </div>
+
+        <!-- Lyrics Display -->
+        <div class="bg-black/50 rounded-lg p-6 mb-6 min-h-[200px]">
+            <div id="lyricsContainer" class="text-center space-y-3">
+                <!-- Le lyrics verranno inserite qui dinamicamente -->
+            </div>
+        </div>
+
+        <!-- Singing Controls -->
+        <div class="text-center space-y-4">
+            <div class="microphone w-20 h-20 rounded-full mx-auto flex items-center justify-center text-3xl cursor-pointer hover:scale-110 transition-transform" id="micButton">
+                🎤
+            </div>
+            <div class="space-x-4">
+                <button id="startBtn" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold transition-colors" onclick="startSinging()">
+                    ▶️ Inizia a Cantare
+                </button>
+                <button id="pauseBtn" class="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 rounded-lg font-bold transition-colors hidden" onclick="pauseSinging()">
+                    ⏸️ Pausa
+                </button>
+                <button class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-bold transition-colors" onclick="stopSinging()">
+                    ⏹️ Stop
+                </button>
+            </div>
+        </div>
+
+        <!-- Feedback Area -->
+        <div id="feedback" class="text-center mt-6 text-2xl font-bold"></div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="hidden max-w-2xl mx-auto p-6 text-center">
+        <h2 class="text-3xl font-bold mb-6">🎉 Risultati Finali! 🎉</h2>
+        <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-8 mb-6">
+            <div class="text-6xl font-bold mb-4" id="finalScore">0</div>
+            <div class="text-xl mb-4" id="performance">Ottima performance!</div>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <div class="font-bold">Combo Massimo</div>
+                    <div id="maxCombo">0x</div>
+                </div>
+                <div>
+                    <div class="font-bold">Precisione</div>
+                    <div id="accuracy">0%</div>
+                </div>
+            </div>
+        </div>
+        <div class="space-x-4">
+            <button class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold transition-colors" onclick="playAgain()">
+                🔄 Gioca Ancora
+            </button>
+            <button class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold transition-colors" onclick="chooseDifferentSong()">
+                🎵 Cambia Canzone
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            score: 0,
+            combo: 0,
+            maxCombo: 0,
+            currentSong: null,
+            isPlaying: false,
+            isPaused: false,
+            startTime: null,
+            currentLineIndex: 0,
+            totalHits: 0,
+            totalNotes: 0
+        };
+
+        // Song Database with Complete Lyrics
+        const songs = {
+            'bella-ciao': {
+                title: 'Bella Ciao',
+                lyrics: [
+                    'Una mattina mi son svegliato',
+                    'O bella ciao, bella ciao, bella ciao ciao ciao',
+                    'Una mattina mi son svegliato',
+                    'E ho trovato l\'invasor',
+                    '',
+                    'O partigiano portami via',
+                    'O bella ciao, bella ciao, bella ciao ciao ciao',
+                    'O partigiano portami via',
+                    'Che mi sento di morir',
+                    '',
+                    'E se io muoio da partigiano',
+                    'O bella ciao, bella ciao, bella ciao ciao ciao',
+                    'E se io muoio da partigiano',
+                    'Tu mi devi seppellir',
+                    '',
+                    'E seppellire lassù in montagna',
+                    'O bella ciao, bella ciao, bella ciao ciao ciao',
+                    'E seppellire lassù in montagna',
+                    'Sotto l\'ombra di un bel fior',
+                    '',
+                    'Tutte le genti che passeranno',
+                    'O bella ciao, bella ciao, bella ciao ciao ciao',
+                    'Tutte le genti che passeranno',
+                    'Mi diranno che bel fior',
+                    '',
+                    'È questo il fiore del partigiano',
+                    'O bella ciao, bella ciao, bella ciao ciao ciao',
+                    'È questo il fiore del partigiano',
+                    'Morto per la libertà'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108],
+                duration: 112
+            },
+            'happy-birthday': {
+                title: 'Happy Birthday',
+                lyrics: [
+                    'Happy birthday to you',
+                    'Happy birthday to you',
+                    'Happy birthday dear friend',
+                    'Happy birthday to you',
+                    '',
+                    'May your day be filled with joy',
+                    'May your dreams all come true',
+                    'Happy birthday dear friend',
+                    'We\'re so happy for you',
+                    '',
+                    'Happy birthday to you',
+                    'Happy birthday to you',
+                    'Happy birthday dear friend',
+                    'Happy birthday to you',
+                    '',
+                    'Blow out the candles now',
+                    'Make a wish, don\'t tell how',
+                    'Happy birthday dear friend',
+                    'This day belongs to you'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72],
+                duration: 76
+            },
+            'imagine': {
+                title: 'Imagine',
+                lyrics: [
+                    'Imagine there\'s no heaven',
+                    'It\'s easy if you try',
+                    'No hell below us',
+                    'Above us only sky',
+                    'Imagine all the people',
+                    'Living for today',
+                    '',
+                    'Imagine there\'s no countries',
+                    'It isn\'t hard to do',
+                    'Nothing to kill or die for',
+                    'And no religion too',
+                    'Imagine all the people',
+                    'Living life in peace',
+                    '',
+                    'You may say I\'m a dreamer',
+                    'But I\'m not the only one',
+                    'I hope someday you\'ll join us',
+                    'And the world will be as one',
+                    '',
+                    'Imagine no possessions',
+                    'I wonder if you can',
+                    'No need for greed or hunger',
+                    'A brotherhood of man',
+                    'Imagine all the people',
+                    'Sharing all the world',
+                    '',
+                    'You may say I\'m a dreamer',
+                    'But I\'m not the only one',
+                    'I hope someday you\'ll join us',
+                    'And the world will live as one'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116],
+                duration: 120
+            },
+            'volare': {
+                title: 'Volare',
+                lyrics: [
+                    'Penso che un sogno così',
+                    'Non ritorni mai più',
+                    'Mi dipingevo le mani',
+                    'E la faccia di blu',
+                    'Poi d\'improvviso venivo',
+                    'Dal vento rapito',
+                    'E incominciavo a volare',
+                    'Nel cielo infinito',
+                    '',
+                    'Volare, oh oh',
+                    'Cantare, oh oh oh oh',
+                    'Nel blu dipinto di blu',
+                    'Felice di stare lassù',
+                    'E volavo volavo felice',
+                    'Più in alto del sole',
+                    'Ed ancora più su',
+                    'Mentre il mondo pian piano',
+                    'Spariva lontano laggiù',
+                    '',
+                    'Una musica dolce',
+                    'Suonava soltanto per me',
+                    'Volare, oh oh',
+                    'Cantare, oh oh oh oh',
+                    'Nel blu dipinto di blu',
+                    'Felice di stare lassù',
+                    '',
+                    'Ma tutti i sogni nell\'alba',
+                    'Svaniscon perché',
+                    'Quando tramonta la luna',
+                    'Li porta con sé',
+                    'Ma io continuo a sognare',
+                    'Negli occhi tuoi belli',
+                    'Che sono blu come un cielo',
+                    'Trapunto di stelle'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132],
+                duration: 136
+            },
+            'bohemian-rhapsody': {
+                title: 'Bohemian Rhapsody',
+                lyrics: [
+                    'Is this the real life?',
+                    'Is this just fantasy?',
+                    'Caught in a landslide',
+                    'No escape from reality',
+                    'Open your eyes',
+                    'Look up to the skies and see',
+                    'I\'m just a poor boy',
+                    'I need no sympathy',
+                    'Because I\'m easy come, easy go',
+                    'Little high, little low',
+                    'Any way the wind blows',
+                    'Doesn\'t really matter to me, to me',
+                    '',
+                    'Mama, just killed a man',
+                    'Put a gun against his head',
+                    'Pulled my trigger, now he\'s dead',
+                    'Mama, life had just begun',
+                    'But now I\'ve gone and thrown it all away',
+                    '',
+                    'Mama, ooh',
+                    'Didn\'t mean to make you cry',
+                    'If I\'m not back again this time tomorrow',
+                    'Carry on, carry on',
+                    'As if nothing really matters',
+                    '',
+                    'Too late, my time has come',
+                    'Sends shivers down my spine',
+                    'Body\'s aching all the time',
+                    'Goodbye, everybody',
+                    'I\'ve got to go',
+                    'Gotta leave you all behind',
+                    'And face the truth',
+                    '',
+                    'Mama, ooh',
+                    'I don\'t wanna die',
+                    'I sometimes wish I\'d never been born at all'
+                ],
+                timing: [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128],
+                duration: 132
+            },
+            'let-it-be': {
+                title: 'Let It Be',
+                lyrics: [
+                    'When I find myself in times of trouble',
+                    'Mother Mary comes to me',
+                    'Speaking words of wisdom',
+                    'Let it be',
+                    'And in my hour of darkness',
+                    'She is standing right in front of me',
+                    'Speaking words of wisdom',
+                    'Let it be',
+                    '',
+                    'Let it be, let it be',
+                    'Let it be, let it be',
+                    'Whisper words of wisdom',
+                    'Let it be',
+                    '',
+                    'And when the broken hearted people',
+                    'Living in the world agree',
+                    'There will be an answer',
+                    'Let it be',
+                    'For though they may be parted',
+                    'There is still a chance that they will see',
+                    'There will be an answer',
+                    'Let it be',
+                    '',
+                    'Let it be, let it be',
+                    'Let it be, let it be',
+                    'Yeah, there will be an answer',
+                    'Let it be',
+                    '',
+                    'And when the night is cloudy',
+                    'There is still a light that shines on me',
+                    'Shine until tomorrow',
+                    'Let it be',
+                    'I wake up to the sound of music',
+                    'Mother Mary comes to me',
+                    'Speaking words of wisdom',
+                    'Let it be'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
+                duration: 144
+            },
+            'la-vie-en-rose': {
+                title: 'La Vie En Rose',
+                lyrics: [
+                    'Des yeux qui font baisser les miens',
+                    'Un rire qui se perd sur sa bouche',
+                    'Voilà le portrait sans retouche',
+                    'De l\'homme auquel j\'appartiens',
+                    '',
+                    'Quand il me prend dans ses bras',
+                    'Il me parle tout bas',
+                    'Je vois la vie en rose',
+                    'Il me dit des mots d\'amour',
+                    'Des mots de tous les jours',
+                    'Et ça me fait quelque chose',
+                    '',
+                    'Il est entré dans mon cœur',
+                    'Une part de bonheur',
+                    'Dont je connais la cause',
+                    'C\'est lui pour moi',
+                    'Moi pour lui dans la vie',
+                    'Il me l\'a dit, l\'a juré',
+                    'Pour la vie',
+                    '',
+                    'Et dès que je l\'aperçois',
+                    'Alors je sens en moi',
+                    'Mon cœur qui bat',
+                    'Des nuits d\'amour à plus finir',
+                    'Un grand bonheur qui prend sa place',
+                    'Les ennuis, les chagrins s\'effacent',
+                    'Heureux, heureux à en mourir'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104],
+                duration: 108
+            },
+            'despacito': {
+                title: 'Despacito',
+                lyrics: [
+                    'Sí, sabes que ya llevo un rato mirándote',
+                    'Tengo que bailar contigo hoy',
+                    'Vi que tu mirada ya estaba llamándome',
+                    'Muéstrame el camino que yo voy',
+                    '',
+                    'Tú, tú eres el imán y yo soy el metal',
+                    'Me voy acercando y voy armando el plan',
+                    'Solo con pensarlo se acelera el pulso',
+                    '',
+                    'Ya, ya me está gustando más de lo normal',
+                    'Todos mis sentidos van pidiendo más',
+                    'Esto hay que tomarlo sin ningún apuro',
+                    '',
+                    'Despacito',
+                    'Quiero respirar tu cuello despacito',
+                    'Deja que te diga cosas al oído',
+                    'Para que te acuerdes si no estás conmigo',
+                    '',
+                    'Despacito',
+                    'Quiero desnudarte a besos despacito',
+                    'Firmo en las paredes de tu laberinto',
+                    'Y hacer de tu cuerpo todo un manuscrito',
+                    '',
+                    'Quiero ver bailar tu pelo',
+                    'Quiero ser tu ritmo',
+                    'Que le enseñes a mi boca',
+                    'Tus lugares favoritos',
+                    '',
+                    'Déjame sobrepasar tus zonas de peligro',
+                    'Hasta provocar tus gritos',
+                    'Y que olvides tu apellido'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112],
+                duration: 116
+            },
+            'wonderwall': {
+                title: 'Wonderwall',
+                lyrics: [
+                    'Today is gonna be the day',
+                    'That they\'re gonna throw it back to you',
+                    'By now you should\'ve somehow',
+                    'Realized what you gotta do',
+                    'I don\'t believe that anybody',
+                    'Feels the way I do about you now',
+                    '',
+                    'Backbeat, the word is on the street',
+                    'That fire in your heart is out',
+                    'I\'m sure you\'ve heard it all before',
+                    'But you never really had a doubt',
+                    'I don\'t believe that anybody',
+                    'Feels the way I do about you now',
+                    '',
+                    'And all the roads we have to walk',
+                    'Are winding',
+                    'And all the lights that lead us there',
+                    'Are blinding',
+                    'There are many things that I',
+                    'Would like to say to you',
+                    'But I don\'t know how',
+                    '',
+                    'Because maybe',
+                    'You\'re gonna be the one that saves me',
+                    'And after all',
+                    'You\'re my wonderwall',
+                    '',
+                    'Today was gonna be the day',
+                    'But they\'ll never throw it back to you',
+                    'By now you should\'ve somehow',
+                    'Realized what you\'re not to do',
+                    'I don\'t believe that anybody',
+                    'Feels the way I do about you now',
+                    '',
+                    'And all the roads that lead you there',
+                    'Were winding',
+                    'And all the lights that light the way',
+                    'Are blinding',
+                    'There are many things that I',
+                    'Would like to say to you',
+                    'But I don\'t know how',
+                    '',
+                    'I said maybe',
+                    'You\'re gonna be the one that saves me',
+                    'And after all',
+                    'You\'re my wonderwall'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172],
+                duration: 176
+           'gli-anni': {
+                title: 'L'universo tranne noi',
+                lyrics: [
+  Testo L'Universo Tranne Noi
+Ti ho incontrata ma... tu non mi hai visto
+Eri in macchina... è stato un attimo
+Ma il mio cuore si è... come bloccato
+O era fermo prima e... ha ripreso a battere
+Tante volte io... l'ho immaginato
+Rivedere te... che effetto mi farà
+Però adesso che... è capitato
+Non importa più se sia... stata colpa tua o mia
+
+Eravamo quel che tutti sognano
+Quell'amore che i cantanti cantano
+Tanto forte, potente, immenso che
+Sembra esagerato ed impossibile
+Con il petto che sembra esplodere
+Che non serve altro in più per vivere
+Che potrebbe scomparire l'Universo tranne noi
+Tranne noi
+
+I ricordi che... sembrano lame
+Fanno male ma... forse li cerco io
+Per rivivere... per ricordare
+Ogni istante accanto a te
+Una vita accanto a te
+
+E il cervello sa... che è complicato
+Ciò che è rotto ormai... non si riparerà
+Però il cuore sai... me l'ha giurato
+Sa che un giorno tornerai... sì
+Dice presto tornerai
+E saremo quel che tutti sognano
+Quell'amore che i cantanti cantano
+Tanto forte, potente, immenso che
+Sembra esagerato ed impossibile
+Con il petto che sembra esplodere
+Che non serve altro in più per vivere
+Che non c'è parola per descrivere
+Che ti sceglie e che non si fa scegliere
+
+E saremo quel che tutti cercano
+Quell'amore che i cantanti cantano
+Tanto forte, potente, immenso che
+Sembra esagerato e irrealizzabile
+E che il petto fa quasi esplodere
+Senza il quale non si può più vivere
+Che potrebbe scomparire l'Universo tranne noi
+Oh-o oh tranne noi
+],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
+                duration: 144
+            },
+             },
+            'gli-anni': {
+                title: 'Gli Anni',
+                lyrics: [
+                    
+Stessa storia, stesso posto, stesso bar
+stessa gente che vien dentro consuma e poi va
+non lo so che faccio quì
+esco un pò
+e vedo i fari delle auto che mi
+guardano e sembrano chiedermi chi cerchiamo noi
+Gli anni d'oro del grande Real
+gli anni di Happy days e di Ralph Malph
+gli anni delle immense compagnie
+gli anni in motorino sempre in due
+gli anni di che belli erano i film
+gli anni dei Roy Rogers come jeans
+gli anni di qualsiasi cosa fai
+gli anni del tranquillo siam qui noi
+siamo qui noi
+Stessa storia, stesso posto, stesso bar
+una coppia che conosco ci avrà la mia età
+come va
+salutano
+così io
+vedo le fedi alle dita di due
+che porco giuda potrei essere io qualche anno fa
+Gli anni d'oro del grande Real
+gli anni di Happy days e di Ralph Malph
+gli anni delle immense compagnie
+gli anni in motorino sempre in due
+gli anni di che belli erano i film
+gli anni dei Roy Rogers come jeans
+gli anni di qualsiasi cosa fai
+gli anni del tranquillo siam qui noi
+siamo qui noi
+siamo qui noi
+Stessa storia, stesso posto, stesso bar
+stan quasi chiudendo
+poi me ne andrò a casa mia
+solo lei
+davanti a me
+cosa vuoi
+il tempo passa per tutti lo sai
+nessuno indietro lo riporterà neppure noi
+Gli anni d'oro del grande Real
+gli anni di Happy days e di Ralph Malph
+gli anni delle immense compagnie
+gli anni in motorino sempre in due
+gli anni di che belli erano i film
+gli anni dei Roy Rogers come jeans
+gli anni di qualsiasi cosa fai
+gli anni del tranquillo siam qui noi
+siamo qui noi
+siamo qui noi
+
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28], // Aggiusta anche questi tempi
+                duration: 32 // E la durata totale
+            },
+            'non-dirgli-mai': {
+                title: 'Non Dirgli Mai',
+                lyrics: [
+                    'Non dirgli mai che l\'hai amato',
+                    'Non dirgli mai che hai pianto',
+                    'Per lui che se n\'è andato',
+                    'Senza neanche salutare',
+                    '',
+                    'Non dirgli mai che la notte',
+                    'Restavi sveglia ad aspettare',
+                    'Una sua telefonata',
+                    'Che non è mai arrivata',
+                    '',
+                    'Perché l\'amore quando finisce',
+                    'Lascia soltanto cicatrici',
+                    'E tu che hai dato tutto',
+                    'Ora rimani con le mani vuote',
+                    '',
+                    'Non dirgli mai quanto male',
+                    'Ti ha fatto quando è andato via',
+                    'Non dirgli mai che ancora',
+                    'Sogni il suo ritorno ogni giorno',
+                    '',
+                    'Ma se un giorno dovesse tornare',
+                    'Con la voglia di ricominciare',
+                    'Tu sorridi e vai avanti',
+                    'Perché meriti di più',
+                    '',
+                    'Non dirgli mai che senza lui',
+                    'Il mondo sembra più grigio',
+                    'Non dirgli mai che il tuo cuore',
+                    'Batte ancora solo per lui',
+                    '',
+                    'Perché l\'orgoglio è tutto',
+                    'Quello che ti è rimasto',
+                    'E anche se fa male',
+                    'È meglio così',
+                    '',
+                    'Non dirgli mai, non dirgli mai',
+                    'Che lo ami ancora',
+                    'Non dirgli mai, non dirgli mai',
+                    'Che senza lui non sai stare'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
+                duration: 144
+            },
+            'strani-amori': {
+                title: 'Strani Amori',
+                lyrics: [
+                    'Strani amori mettono nei guai',
+                    'Ma non li eviterei mai',
+                    'Perché dentro agli sbagli',
+                    'Ci trovi quello che non cerchi mai',
+                    '',
+                    'Strani amori che non sai',
+                    'Se ti stanno bene oppure no',
+                    'Che ti lasciano così',
+                    'Senza fiato e senza un perché',
+                    '',
+                    'Ma sono quelli che ti cambiano',
+                    'Che ti aprono la mente e il cuore',
+                    'Che ti fanno diventare',
+                    'Quello che non eri prima',
+                    '',
+                    'Strani amori che non puoi',
+                    'Spiegare neanche a te stesso',
+                    'Che ti prendono così',
+                    'All\'improvviso senza un motivo',
+                    '',
+                    'E ti ritrovi a camminare',
+                    'Su una strada che non conosci',
+                    'Con il cuore che batte forte',
+                    'E la paura di sbagliare ancora',
+                    '',
+                    'Ma sono quelli veri',
+                    'Quelli che ti fanno male e bene',
+                    'Che ti insegnano a volare',
+                    'Anche quando hai paura di cadere',
+                    '',
+                    'Strani amori che restano',
+                    'Anche quando tutto finisce',
+                    'Che ti cambiano per sempre',
+                    'E non te ne penti mai',
+                    '',
+                    'Perché dentro agli sbagli',
+                    'Ci trovi quello che non cerchi mai',
+                    'Strani amori mettono nei guai',
+                    'Ma non li eviterei mai'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
+                duration: 144
+            },
+            'perdono': {
+                title: 'Perdono',
+                lyrics: [
+                    'Perdono se non riesco a perdonare',
+                    'Chi mi ha fatto del male senza un perché',
+                    'Perdono se non riesco a dimenticare',
+                    'Quello che mi hai fatto tu',
+                    '',
+                    'Ma come si fa a dire ti amo',
+                    'A chi ti ha spezzato il cuore',
+                    'Come si fa a sorridere',
+                    'Quando dentro stai morendo',
+                    '',
+                    'Perdono se non riesco a essere forte',
+                    'Come vorresti tu che fossi io',
+                    'Perdono se non riesco a fare finta',
+                    'Che tutto vada bene tra di noi',
+                    '',
+                    'Ma dimmi come si fa',
+                    'A ricominciare da capo',
+                    'Quando tutto quello che avevi',
+                    'È andato in frantumi',
+                    '',
+                    'Perdono se non riesco a fidarmi',
+                    'Di chi dice che mi vuole bene',
+                    'Perdono se ho paura di amare',
+                    'Perché ho paura di soffrire ancora',
+                    '',
+                    'Ma forse un giorno imparerò',
+                    'A perdonare davvero',
+                    'E forse un giorno riuscirò',
+                    'A dimenticare il dolore',
+                    '',
+                    'Perdono se non sono perfetto',
+                    'Come vorresti che fossi',
+                    'Perdono se sono solo umano',
+                    'Con tutti i miei difetti'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124],
+                duration: 128
+            },
+            'rosso-relativo': {
+                title: 'Rosso Relativo',
+                lyrics: [
+                    
+La voglia scalpitava, strillava,
+tuonava..cantava..
+Da notte fonda nel petto di..
+Paola..oh..Paola..
+La noia quella sera era troppa
+E cercava, chiamava
+200 principi e invece lei era la
+dama del castello
+
+Il tuo è un rosso relativo
+Senza macchia d'amore ma adesso
+Canterà dentro di te
+Per la gran solitudine e..
+Forza..amati per questa sera
+Che domani torni in te ma
+Non ti diverte perché
+Vuoi qualcosa di più facile.
+
+La timidezza c'era ma svaniva,
+scappava di notte..si dileguava
+dagli occhi di..
+Paola..oh..Paola
+Giocava a rimpiattino nascondeva
+E mostrava, cercava
+Il cacciatore e invece lei era la
+Preda dentro il bosco
+
+Il tuo è un rosso relativo
+Senza macchia d'amore ma adesso
+Canterà dentro di te
+Per la gran solitudine e..
+Forza..amati per questa sera
+Che domani torni in te ma
+Non ti diverte perché
+Vuoi qualcosa di più facile.
+
+E non riposi più
+Solo lo schermo e tu (e provo pena)
+Tastiera e anima
+Posso dimostrarti adesso che ha
+Ben altre forme il sesso...
+
+La voglia scalpitava, strillava, tuonava..cantava..
+Da notte fonda nel petto di..
+Paola..oh..Paola..
+La noia quella sera era troppa
+E cercava, chiamava
+200 principi e invece lei era la
+Dama del castello
+
+Il tuo è un rosso relativo
+Senza macchia d'amore ma adesso
+Canterà dentro di te
+Per la gran solitudine e..
+Forza..amati per questa sera
+Che domani torni in te ma
+Non ti diverte perché
+Vuoi qualcosa di più facile.
+
+Il tuo è un rosso relativo
+Senza macchia d'amore ma adesso
+Canterà dentro di te
+Per la gran solitudine e..
+Forza..amati per questa sera
+Che domani torni in te ma
+Non ti diverte perché
+Vuoi qualcosa di più facile. Il tuo è un rosso relativo!
+
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
+                duration: 144
+            },
+            'sere-nere': {
+                title: 'Sere Nere',
+                lyrics: [
+                    
+Ripenserai agli angeli
+Al caffè caldo svegliandoti
+Mentre passa distratta la notizia di noi due
+Dicono che mi servirà
+Se non uccide fortifica
+Mentre passa distratta la tua voce alla tv
+Tra la radio e il telefono risuonerà il tuo addio
+
+Di sere nere
+Che non c'è tempo
+Non c'è spazio
+E mai nessuno capirà
+Puoi rimanere
+Perché fa male male
+Male da morire
+Senza te...senza te...senza te
+
+Ripenserei che non sei qua
+Ma mi distrae la pubblicità
+Tra gli orari ed il traffico lavoro e tu ci sei
+Tra il balcone e il citofono ti dedico i miei guai
+
+Di sere nere
+Che non c'è tempo
+Non c'è spazio
+E mai nessuno capirà
+Puoi rimanere
+Perché fa male male
+Male da morire
+Senza te
+
+Ho combattuto il silenzio parlandogli addosso
+E levigato la tua assenza solo con le mie braccia
+E più mi vorrai e meno mi vedrai
+E meno mi vorrai e più sarò con te
+E più mi vorrai e meno mi vedrai
+E meno mi vorrai e più sarò con te
+E più sarò con te, con te, con te
+Lo giuro
+
+Di sere nere
+Che non c'è tempo
+Non c'è spazio
+E mai nessuno capirà
+Puoi rimanere
+Perché fa male male
+Male da morire
+Senza te
+Senza te
+Senza te
+Senza te
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
+                duration: 144
+            },
+            'il-regalo-piu-grande': {
+                title: 'Il Regalo Più Grande',
+                lyrics: [
+                    'Il regalo più grande',
+                    'Che potessi mai desiderare',
+                    'È averti qui accanto',
+                    'In questo momento speciale',
+                    '',
+                    'Non servono parole',
+                    'Per dirti quanto ti amo',
+                    'Basta guardarti negli occhi',
+                    'Per capire che sei tutto',
+                    '',
+                    'Il regalo più grande',
+                    'È il tuo sorriso al mattino',
+                    'È la tua mano nella mia',
+                    'Lungo questo cammino',
+                    '',
+                    'Non ho bisogno di altro',
+                    'Se ci sei tu con me',
+                    'Ogni giorno è Natale',
+                    'Ogni momento è magia',
+                    '',
+                    'Il regalo più grande',
+                    'È il tempo che passiamo insieme',
+                    'Sono i sogni che condividiamo',
+                    'E l\'amore che ci unisce',
+                    '',
+                    'Tu sei il mio regalo',
+                    'Il più bello che ci sia',
+                    'Tu sei la mia felicità',
+                    'La mia dolce melodia',
+                    '',
+                    'E se potessi esprimere un desiderio',
+                    'Vorrei che questo momento',
+                    'Non finisse mai',
+                    'Perché tu sei il regalo più grande'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124],
+                duration: 128
+            },
+            'self-control': {
+                title: 'Self Control',
+                lyrics: [
+                    // SOSTITUISCI CON I TESTI ORIGINALI DI RAF
+                    'Testi temporanei - inserisci qui i versi originali',
+                    'di "Self Control" di Raf',
+                    'copiandoli da un sito di testi musicali',
+                    '',
+                    'Self Control è una delle canzoni',
+                    'più famose degli anni \'80',
+                    'Un classico della new wave italiana',
+                    'che tutti conoscono a memoria'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28],
+                duration: 32
+            },
+            'ti-pretendo': {
+                title: 'Ti Pretendo',
+                lyrics: [
+                    // SOSTITUISCI CON I TESTI ORIGINALI DI RAF
+                    'Testi temporanei - inserisci qui i versi originali',
+                    'di "Ti Pretendo" di Raf',
+                    'copiandoli da un sito di testi musicali',
+                    '',
+                    'Ti Pretendo è un altro grande successo',
+                    'di Raf degli anni \'80',
+                    'Una canzone d\'amore intensa',
+                    'che ha fatto ballare generazioni'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28],
+                duration: 32
+            },
+            'cosa-restera-degli-anni-80': {
+                title: 'Cosa Resterà degli Anni \'80',
+                lyrics: [
+                    // SOSTITUISCI CON I TESTI ORIGINALI DI RAF
+                    'Testi temporanei - inserisci qui i versi originali',
+                    'di "Cosa Resterà degli Anni \'80" di Raf',
+                    'copiandoli da un sito di testi musicali',
+                    '',
+                    'Una riflessione nostalgica',
+                    'su un decennio indimenticabile',
+                    'Gli anni \'80 con la loro magia',
+                    'e i sogni di una generazione'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28],
+                duration: 32
+            },
+            'gente-di-mare': {
+                title: 'Gente di Mare',
+                lyrics: [
+                    // SOSTITUISCI CON I TESTI ORIGINALI DI RAF & UMBERTO TOZZI
+                    'Testi temporanei - inserisci qui i versi originali',
+                    'di "Gente di Mare" di Raf & Umberto Tozzi',
+                    'copiandoli da un sito di testi musicali',
+                    '',
+                    'Un duetto straordinario',
+                    'tra due grandi della musica italiana',
+                    'Una canzone che parla di viaggi',
+                    'e di gente che vive il mare'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28],
+                duration: 32
+            },
+            'infinito': {
+                title: 'Infinito',
+                lyrics: [
+                    // SOSTITUISCI CON I TESTI ORIGINALI DI RAF
+                    'Testi temporanei - inserisci qui i versi originali',
+                    'di "Infinito" di Raf',
+                    'copiandoli da un sito di testi musicali',
+                    '',
+                    'Una ballad romantica e profonda',
+                    'che parla di amore infinito',
+                    'Una delle canzoni più belle',
+                    'del repertorio di Raf'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28],
+                duration: 32
+            },
+            'pensa': {
+                title: 'Pensa',
+                lyrics: [
+                    // SOSTITUISCI CON I TESTI ORIGINALI DI FABRIZIO MORO
+                    'Testi temporanei - inserisci qui i versi originali',
+                    'di "Pensa" di Fabrizio Moro',
+                    'copiandoli da un sito di testi musicali',
+                    '',
+                    'Una canzone che invita alla riflessione',
+                    'sui problemi della società moderna',
+                    'Un brano rock intenso e coinvolgente',
+                    'che ha vinto il Festival di Sanremo'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28],
+                duration: 32
+            },
+            'portami-via': {
+                title: 'Portami Via',
+                lyrics: [
+                    // SOSTITUISCI CON I TESTI ORIGINALI DI FABRIZIO MORO
+                    Testo Portami Via
+Tu portami via
+Dalle ostilità dei giorni che verranno
+Dai riflessi del passato perché torneranno
+Dai sospiri lunghi per tradire il panico che provoca l'’ipocondria
+Tu portami via
+Dalla convinzione di non essere abbastanza forte
+Quando cado contro un mostro più grande di me
+Consapevole che a volte basta prendere la vita cosi com'’è
+Cosi com'’è
+Imprevedibile
+Portami via dai momenti
+Da questi anni invadenti
+Da ogni angolo di tempo dove io non trovo più energia
+Amore mio portami via
+Tu portami via
+Quando torna la paura e non so più reagire
+Dai rimorsi degli errori che continuo a fare
+Mentre lotto a denti stretti nascondendo l'amarezza dentro a una bugia
+Tu portami via
+Se c'’è un muro troppo alto per vedere il mio domani
+E mi trovi lì ai suoi piedi con la testa fra le mani
+Se fra tante vie d'’uscita mi domando quella giusta chissà dov'’è
+Chissà dov'’è
+È imprevedibile
+Portami via dai momenti
+Da tutto il vuoto che senti
+Dove niente potrà farmi più del male ovunque sia
+Amore mio portami via
+Tu
+Tu sai comprendere
+Questo silenzio che determina il confine fra i miei dubbi e la realtà
+Da qui all’'eternità tu non ti arrendere
+Portami via dai momenti
+Da questi anni violenti
+Da ogni angolo di tempo dove io non trovo più energia
+Amore mio portami via
+
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28],
+                duration: 32
+            },
+            'non-me-ne-frega-niente': {
+                title: 'Non Me Ne Frega Niente',
+                lyrics: [
+                    // SOSTITUISCI CON I TESTI ORIGINALI DI FABRIZIO MORO
+                    'Testi temporanei - inserisci qui i versi originali',
+                    'di "Non Me Ne Frega Niente" di Fabrizio Moro',
+                    'copiandoli da un sito di testi musicali',
+                    '',
+                    'Un inno alla libertà di pensiero',
+                    'e all\'indipendenza dalle opinioni altrui',
+                    'Rock puro e diretto',
+                    'nel tipico stile di Fabrizio Moro'
+                ],
+                timing: [0, 4, 8, 12, 16, 20, 24, 28],
+                duration: 32
+            }
+        };
+
+        function selectSong(songId) {
+            gameState.currentSong = songs[songId];
+            document.getElementById('songSelection').classList.add('hidden');
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('currentSong').textContent = gameState.currentSong.title;
+            setupLyrics();
+        }
+
+        function setupLyrics() {
+            const container = document.getElementById('lyricsContainer');
+            container.innerHTML = '';
+            
+            gameState.currentSong.lyrics.forEach((line, index) => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'lyrics-line text-lg opacity-50';
+                lineDiv.textContent = line;
+                lineDiv.id = `line-${index}`;
+                container.appendChild(lineDiv);
+            });
+        }
+
+        function startSinging() {
+            if (gameState.isPaused) {
+                resumeSinging();
+                return;
+            }
+
+            gameState.isPlaying = true;
+            gameState.startTime = Date.now();
+            gameState.currentLineIndex = 0;
+            gameState.totalNotes = gameState.currentSong.lyrics.length;
+            
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            document.getElementById('songStatus').textContent = 'Cantando...';
+            
+            startTimer();
+            startLyricsAnimation();
+        }
+
+        function pauseSinging() {
+            gameState.isPaused = true;
+            gameState.isPlaying = false;
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            document.getElementById('songStatus').textContent = 'In pausa';
+        }
+
+        function resumeSinging() {
+            gameState.isPaused = false;
+            gameState.isPlaying = true;
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            document.getElementById('songStatus').textContent = 'Cantando...';
+            document.getElementById('songStatus').textContent = 'canta insieme al testo';
+            }
+
+        function stopSinging() {
+            gameState.isPlaying = false;
+            gameState.isPaused = false;
+            showResults();
+        }
+
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                if (!gameState.isPlaying) {
+                    if (!gameState.isPaused) {
+                        clearInterval(timerInterval);
+                    }
+                    return;
+                }
+
+                const elapsed = (Date.now() - gameState.startTime) / 1000;
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = Math.floor(elapsed % 60);
+                document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Update progress bar
+                const progress = (elapsed / gameState.currentSong.duration) * 100;
+                document.getElementById('progressBar').style.width = `${Math.min(progress, 100)}%`;
+                
+                if (elapsed >= gameState.currentSong.duration) {
+                    clearInterval(timerInterval);
+                    stopSinging();
+                }
+            }, 100);
+        }
+
+        function startLyricsAnimation() {
+            const lyricsInterval = setInterval(() => {
+                if (!gameState.isPlaying) {
+                    if (!gameState.isPaused) {
+                        clearInterval(lyricsInterval);
+                    }
+                    return;
+                }
+
+                const elapsed = (Date.now() - gameState.startTime) / 1000;
+                const currentTiming = gameState.currentSong.timing[gameState.currentLineIndex];
+                
+                if (elapsed >= currentTiming && gameState.currentLineIndex < gameState.currentSong.lyrics.length) {
+                    // Highlight current line
+                    document.querySelectorAll('.lyrics-line').forEach(line => {
+                        line.classList.remove('active-line');
+                        line.classList.add('opacity-50');
+                    });
+                    
+                    const currentLine = document.getElementById(`line-${gameState.currentLineIndex}`);
+                    if (currentLine) {
+                        currentLine.classList.add('active-line', 'slide-in');
+                        currentLine.classList.remove('opacity-50');
+                    }
+                    
+                    gameState.currentLineIndex++;
+                }
+            }, 100);
+        }
+
+        // Microphone interaction simulation
+        document.getElementById('micButton').addEventListener('click', function() {
+            if (!gameState.isPlaying) return;
+            
+            this.classList.add('pulse');
+            setTimeout(() => this.classList.remove('pulse'), 300);
+            
+            // Simulate singing feedback
+            const feedbacks = ['Perfetto! 🎵', 'Ottimo! ⭐', 'Bravo! 🎤', 'Fantastico! 🌟'];
+            const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
+            
+            // Add points
+            const points = Math.floor(Math.random() * 50) + 50;
+            gameState.score += points;
+            gameState.combo++;
+            gameState.totalHits++;
+            
+            if (gameState.combo > gameState.maxCombo) {
+                gameState.maxCombo = gameState.combo;
+            }
+            
+            updateUI();
+            showFeedback(feedback, points);
+        });
+
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('combo').textContent = `${gameState.combo}x`;
+        }
+
+        function showFeedback(message, points) {
+            const feedback = document.getElementById('feedback');
+            feedback.innerHTML = `${message} +${points}`;
+            feedback.classList.add('slide-in');
+            
+            setTimeout(() => {
+                feedback.innerHTML = '';
+                feedback.classList.remove('slide-in');
+            }, 2000);
+        }
+
+        function showResults() {
+            document.getElementById('gameArea').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            
+            const accuracy = gameState.totalNotes > 0 ? Math.round((gameState.totalHits / gameState.totalNotes) * 100) : 0;
+            
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('maxCombo').textContent = `${gameState.maxCombo}x`;
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+            
+            let performance = 'Continua a praticare!';
+            if (accuracy >= 90) performance = 'Sei una star! 🌟';
+            else if (accuracy >= 70) performance = 'Ottima performance! 🎵';
+            else if (accuracy >= 50) performance = 'Buon lavoro! 👏';
+            
+            document.getElementById('performance').textContent = performance;
+        }
+
+        function playAgain() {
+            // Reset game state
+            gameState = {
+                score: 0,
+                combo: 0,
+                maxCombo: 0,
+                currentSong: gameState.currentSong,
+                isPlaying: false,
+                isPaused: false,
+                startTime: null,
+                currentLineIndex: 0,
+                totalHits: 0,
+                totalNotes: 0
+            };
+            
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            document.getElementById('songStatus').textContent = 'Preparati a cantare!';
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('timer').textContent = '0:00';
+            
+            updateUI();
+            setupLyrics();
+        }
+
+        function chooseDifferentSong() {
+            // Reset everything
+            gameState = {
+                score: 0,
+                combo: 0,
+                maxCombo: 0,
+                currentSong: null,
+                isPlaying: false,
+                isPaused: false,
+                startTime: null,
+                currentLineIndex: 0,
+                totalHits: 0,
+                totalNotes: 0
+            };
+            
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('songSelection').classList.remove('hidden');
+            updateUI();
+        }
+
+        // Search functionality
+        async function searchSongs() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                document.getElementById('searchStatus').textContent = 'Inserisci il nome di una canzone per cercare';
+                return;
+            }
+
+            document.getElementById('searchStatus').textContent = '🔍 Cercando...';
+            document.getElementById('searchResults').innerHTML = '';
+
+            try {
+                // Simulate API call with mock data based on search
+                const mockResults = generateMockResults(query);
+                
+                setTimeout(() => {
+                    displaySearchResults(mockResults);
+                    document.getElementById('searchStatus').textContent = `Trovate ${mockResults.length} canzoni`;
+                }, 1000);
+                
+            } catch (error) {
+                document.getElementById('searchStatus').textContent = 'Errore nella ricerca. Riprova più tardi.';
+            }
+        }
+
+        function generateMockResults(query) {
+            const mockSongs = [
+                // Pop Internazionale
+                { title: 'Perfect', artist: 'Ed Sheeran', genre: 'Pop', difficulty: 3, year: 2017, popularity: 95 },
+                { title: 'Shape of You', artist: 'Ed Sheeran', genre: 'Pop', difficulty: 3, year: 2017, popularity: 98 },
+                { title: 'Anti-Hero', artist: 'Taylor Swift', genre: 'Pop', difficulty: 3, year: 2022, popularity: 92 },
+                { title: 'Shake It Off', artist: 'Taylor Swift', genre: 'Pop', difficulty: 2, year: 2014, popularity: 89 },
+                { title: 'Someone Like You', artist: 'Adele', genre: 'Ballad', difficulty: 4, year: 2011, popularity: 94 },
+                { title: 'Rolling in the Deep', artist: 'Adele', genre: 'Soul', difficulty: 4, year: 2010, popularity: 96 },
+                { title: 'Blinding Lights', artist: 'The Weeknd', genre: 'Synthpop', difficulty: 3, year: 2019, popularity: 97 },
+                { title: 'Watermelon Sugar', artist: 'Harry Styles', genre: 'Pop', difficulty: 2, year: 2020, popularity: 88 },
+                { title: 'Bad Guy', artist: 'Billie Eilish', genre: 'Alternative', difficulty: 3, year: 2019, popularity: 93 },
+                { title: 'Shallow', artist: 'Lady Gaga & Bradley Cooper', genre: 'Ballad', difficulty: 4, year: 2018, popularity: 91 },
+                { title: 'Levitating', artist: 'Dua Lipa', genre: 'Dance Pop', difficulty: 3, year: 2020, popularity: 90 },
+                { title: 'Stay', artist: 'The Kid LAROI & Justin Bieber', genre: 'Pop', difficulty: 2, year: 2021, popularity: 87 },
+                
+                // Rock Classico
+                { title: 'We Will Rock You', artist: 'Queen', genre: 'Rock', difficulty: 2, year: 1977, popularity: 99 },
+                { title: 'Don\'t Stop Me Now', artist: 'Queen', genre: 'Rock', difficulty: 4, year: 1978, popularity: 95 },
+                { title: 'Hey Jude', artist: 'The Beatles', genre: 'Rock', difficulty: 3, year: 1968, popularity: 98 },
+                { title: 'Yesterday', artist: 'The Beatles', genre: 'Ballad', difficulty: 3, year: 1965, popularity: 96 },
+                { title: 'Stairway to Heaven', artist: 'Led Zeppelin', genre: 'Rock', difficulty: 5, year: 1971, popularity: 97 },
+                { title: 'Hotel California', artist: 'Eagles', genre: 'Rock', difficulty: 4, year: 1976, popularity: 94 },
+                
+                // Hip-Hop & R&B
+                { title: 'Lose Yourself', artist: 'Eminem', genre: 'Hip-Hop', difficulty: 5, year: 2002, popularity: 96 },
+                { title: 'God\'s Plan', artist: 'Drake', genre: 'Hip-Hop', difficulty: 3, year: 2018, popularity: 92 },
+                { title: 'Crazy in Love', artist: 'Beyoncé', genre: 'R&B', difficulty: 4, year: 2003, popularity: 93 },
+                { title: 'Halo', artist: 'Beyoncé', genre: 'R&B', difficulty: 4, year: 2008, popularity: 91 },
+                
+                // Pop Italiano
+                { title: 'Beggin\'', artist: 'Måneskin', genre: 'Rock', difficulty: 3, year: 2021, popularity: 89 },
+                { title: 'Zitti e Buoni', artist: 'Måneskin', genre: 'Rock', difficulty: 4, year: 2021, popularity: 85 },
+                { title: 'I Wanna Be Your Slave', artist: 'Måneskin', genre: 'Rock', difficulty: 3, year: 2021, popularity: 87 },
+                { title: 'La Solitudine', artist: 'Laura Pausini', genre: 'Pop', difficulty: 3, year: 1993, popularity: 88 },
+                { title: 'Strani Amori', artist: 'Laura Pausini', genre: 'Ballad', difficulty: 4, year: 1994, popularity: 90 },
+                { title: 'Io Canto', artist: 'Laura Pausini', genre: 'Pop', difficulty: 3, year: 2006, popularity: 87 },
+                { title: 'Le Cose Che Vivi', artist: 'Laura Pausini', genre: 'Pop', difficulty: 3, year: 1996, popularity: 89 },
+                { title: 'Gli Anni', artist: 'Max Pezzali', genre: 'Pop Rock', difficulty: 3, year: 2003, popularity: 92 },
+                { title: 'Hanno Ucciso l\'Uomo Ragno', artist: '883', genre: 'Pop Rock', difficulty: 3, year: 1992, popularity: 94 },
+                { title: 'Come Mai', artist: '883', genre: 'Pop Rock', difficulty: 2, year: 1993, popularity: 91 },
+                { title: 'Nord Sud Ovest Est', artist: '883', genre: 'Pop Rock', difficulty: 3, year: 1993, popularity: 90 },
+                { title: 'Non Dirgli Mai', artist: 'Gigi D\'Alessio', genre: 'Pop', difficulty: 4, year: 2000, popularity: 88 },
+                { title: 'Il Cammino dell\'Età', artist: 'Gigi D\'Alessio', genre: 'Pop', difficulty: 3, year: 2001, popularity: 85 },
+                { title: 'Un Nuovo Bacio', artist: 'Gigi D\'Alessio', genre: 'Pop', difficulty: 3, year: 2003, popularity: 86 },
+                { title: 'Perdono', artist: 'Tiziano Ferro', genre: 'Pop', difficulty: 3, year: 2001, popularity: 86 },
+                { title: 'Rosso Relativo', artist: 'Tiziano Ferro', genre: 'Pop', difficulty: 4, year: 2002, popularity: 88 },
+                { title: 'Sere Nere', artist: 'Tiziano Ferro', genre: 'Pop', difficulty: 4, year: 2003, popularity: 87 },
+                { title: 'Il Regalo Più Grande', artist: 'Tiziano Ferro', genre: 'Ballad', difficulty: 3, year: 2009, popularity: 89 },
+                { title: 'L\'Universo Tranne Noi', artist: 'Max Pezzali', genre: 'Pop Rock', difficulty: 3, year: 2004, popularity: 90 },
+                { title: 'Nessun Rimpianto', artist: 'Max Pezzali', genre: 'Pop Rock', difficulty: 3, year: 2007, popularity: 88 },
+                { title: 'Eccoti', artist: 'Max Pezzali', genre: 'Pop Rock', difficulty: 3, year: 2011, popularity: 87 },
+                { title: 'Come È Bello Il Mondo Insieme A Te', artist: 'Max Pezzali', genre: 'Pop Rock', difficulty: 2, year: 2014, popularity: 86 },
+                { title: 'Azzurro', artist: 'Adriano Celentano', genre: 'Pop', difficulty: 2, year: 1968, popularity: 92 },
+                { title: 'Il Ragazzo della Via Gluck', artist: 'Adriano Celentano', genre: 'Pop', difficulty: 3, year: 1966, popularity: 90 },
+                { title: 'Prisencolinensinainciusol', artist: 'Adriano Celentano', genre: 'Pop', difficulty: 5, year: 1972, popularity: 88 },
+                { title: 'Self Control', artist: 'Raf', genre: 'New Wave', difficulty: 4, year: 1984, popularity: 94 },
+                { title: 'Ti Pretendo', artist: 'Raf', genre: 'Pop Rock', difficulty: 3, year: 1985, popularity: 89 },
+                { title: 'Cosa Resterà degli Anni \'80', artist: 'Raf', genre: 'Pop', difficulty: 4, year: 1989, popularity: 91 },
+                { title: 'Gente di Mare', artist: 'Raf & Umberto Tozzi', genre: 'Pop', difficulty: 4, year: 1987, popularity: 93 },
+                { title: 'Infinito', artist: 'Raf', genre: 'Ballad', difficulty: 3, year: 1988, popularity: 87 },
+                { title: 'Due', artist: 'Raf', genre: 'Pop', difficulty: 3, year: 1990, popularity: 85 },
+                { title: 'Sei la Più Bella del Mondo', artist: 'Raf', genre: 'Pop', difficulty: 3, year: 1992, popularity: 86 },
+                
+                // Fabrizio Moro
+                { title: 'Pensa', artist: 'Fabrizio Moro', genre: 'Rock', difficulty: 4, year: 2007, popularity: 91 },
+                { title: 'Portami Via', artist: 'Fabrizio Moro', genre: 'Rock', difficulty: 4, year: 2017, popularity: 88 },
+                { title: 'Non Me Ne Frega Niente', artist: 'Fabrizio Moro', genre: 'Rock', difficulty: 4, year: 2018, popularity: 86 },
+                { title: 'Sono Anni Che Ti Aspetto', artist: 'Fabrizio Moro', genre: 'Rock', difficulty: 3, year: 2010, popularity: 85 },
+                { title: 'Parole Rumori e Anni', artist: 'Fabrizio Moro', genre: 'Rock', difficulty: 4, year: 2012, popularity: 84 },
+                
+                // Vasco Rossi
+                { title: 'Albachiara', artist: 'Vasco Rossi', genre: 'Rock', difficulty: 3, year: 1979, popularity: 96 },
+                { title: 'Sally', artist: 'Vasco Rossi', genre: 'Rock', difficulty: 3, year: 1996, popularity: 94 },
+                { title: 'Vita Spericolata', artist: 'Vasco Rossi', genre: 'Rock', difficulty: 3, year: 1983, popularity: 95 },
+                { title: 'Siamo Solo Noi', artist: 'Vasco Rossi', genre: 'Rock', difficulty: 3, year: 1981, popularity: 93 },
+                { title: 'Rewind', artist: 'Vasco Rossi', genre: 'Rock', difficulty: 4, year: 1999, popularity: 91 },
+                { title: 'Gli Spari Sopra', artist: 'Vasco Rossi', genre: 'Rock', difficulty: 4, year: 1993, popularity: 90 },
+                { title: 'Brava', artist: 'Vasco Rossi', genre: 'Rock', difficulty: 3, year: 2011, popularity: 89 },
+                { title: 'Come Nelle Favole', artist: 'Vasco Rossi', genre: 'Rock', difficulty: 3, year: 2005, popularity: 88 },
+                
+                // Ligabue
+                { title: 'Certe Notti', artist: 'Ligabue', genre: 'Rock', difficulty: 3, year: 1995, popularity: 94 },
+                { title: 'Piccola Stella Senza Cielo', artist: 'Ligabue', genre: 'Rock', difficulty: 4, year: 1998, popularity: 92 },
+                { title: 'Ho Perso le Parole', artist: 'Ligabue', genre: 'Rock', difficulty: 3, year: 2002, popularity: 90 },
+                { title: 'Il Giorno di Dolore Che Uno Ha', artist: 'Ligabue', genre: 'Rock', difficulty: 4, year: 2006, popularity: 89 },
+                { title: 'Urlando Contro il Cielo', artist: 'Ligabue', genre: 'Rock', difficulty: 4, year: 2005, popularity: 88 },
+                { title: 'Balliamo Sul Mondo', artist: 'Ligabue', genre: 'Rock', difficulty: 3, year: 1999, popularity: 87 },
+                
+                // Zucchero
+                { title: 'Senza Una Donna', artist: 'Zucchero', genre: 'Blues Rock', difficulty: 4, year: 1991, popularity: 93 },
+                { title: 'Diavolo in Me', artist: 'Zucchero', genre: 'Blues Rock', difficulty: 4, year: 2013, popularity: 89 },
+                { title: 'Il Volo', artist: 'Zucchero', genre: 'Blues Rock', difficulty: 3, year: 1989, popularity: 91 },
+                { title: 'Baila', artist: 'Zucchero', genre: 'Blues Rock', difficulty: 3, year: 2006, popularity: 88 },
+                { title: 'Così Celeste', artist: 'Zucchero', genre: 'Blues Rock', difficulty: 4, year: 2001, popularity: 87 },
+                
+                // Eros Ramazzotti
+                { title: 'Più Bella Cosa', artist: 'Eros Ramazzotti', genre: 'Pop', difficulty: 3, year: 1996, popularity: 92 },
+                { title: 'Se Bastasse Una Canzone', artist: 'Eros Ramazzotti', genre: 'Pop', difficulty: 4, year: 1990, popularity: 91 },
+                { title: 'Adesso Tu', artist: 'Eros Ramazzotti', genre: 'Pop', difficulty: 3, year: 1986, popularity: 90 },
+                { title: 'Cose della Vita', artist: 'Eros Ramazzotti', genre: 'Pop', difficulty: 4, year: 1993, popularity: 89 },
+                { title: 'Terra Promessa', artist: 'Eros Ramazzotti', genre: 'Pop', difficulty: 3, year: 1984, popularity: 88 },
+                { title: 'Un\'Altra Te', artist: 'Eros Ramazzotti', genre: 'Pop', difficulty: 3, year: 2011, popularity: 86 },
+                
+                // Lucio Battisti
+                { title: 'Acqua Azzurra Acqua Chiara', artist: 'Lucio Battisti', genre: 'Pop', difficulty: 3, year: 1969, popularity: 95 },
+                { title: 'Il Mio Canto Libero', artist: 'Lucio Battisti', genre: 'Pop', difficulty: 4, year: 1972, popularity: 96 },
+                { title: 'Emozioni', artist: 'Lucio Battisti', genre: 'Pop', difficulty: 4, year: 1970, popularity: 94 },
+                { title: 'La Canzone del Sole', artist: 'Lucio Battisti', genre: 'Pop', difficulty: 3, year: 1971, popularity: 93 },
+                { title: 'I Giardini di Marzo', artist: 'Lucio Battisti', genre: 'Pop', difficulty: 4, year: 1972, popularity: 92 },
+                { title: 'Pensieri e Parole', artist: 'Lucio Battisti', genre: 'Pop', difficulty: 3, year: 1971, popularity: 91 },
+                
+                // Francesco De Gregori
+                { title: 'La Donna Cannone', artist: 'Francesco De Gregori', genre: 'Folk', difficulty: 4, year: 1983, popularity: 93 },
+                { title: 'Rimmel', artist: 'Francesco De Gregori', genre: 'Folk', difficulty: 3, year: 1975, popularity: 92 },
+                { title: 'Generale', artist: 'Francesco De Gregori', genre: 'Folk', difficulty: 3, year: 1978, popularity: 90 },
+                { title: 'Alice', artist: 'Francesco De Gregori', genre: 'Folk', difficulty: 4, year: 1973, popularity: 89 },
+                { title: 'Titanic', artist: 'Francesco De Gregori', genre: 'Folk', difficulty: 4, year: 1982, popularity: 88 },
+                
+                // Claudio Baglioni
+                { title: 'Questo Piccolo Grande Amore', artist: 'Claudio Baglioni', genre: 'Pop', difficulty: 4, year: 1972, popularity: 94 },
+                { title: 'E Tu Come Stai', artist: 'Claudio Baglioni', genre: 'Pop', difficulty: 3, year: 1978, popularity: 92 },
+                { title: 'Strada Facendo', artist: 'Claudio Baglioni', genre: 'Pop', difficulty: 3, year: 1981, popularity: 91 },
+                { title: 'Avrai', artist: 'Claudio Baglioni', genre: 'Pop', difficulty: 4, year: 1982, popularity: 90 },
+                { title: 'Poster', artist: 'Claudio Baglioni', genre: 'Pop', difficulty: 3, year: 1979, popularity: 89 },
+                
+                // Renato Zero
+                { title: 'Il Cielo', artist: 'Renato Zero', genre: 'Pop', difficulty: 4, year: 1980, popularity: 91 },
+                { title: 'Triangolo', artist: 'Renato Zero', genre: 'Pop', difficulty: 4, year: 1978, popularity: 90 },
+                { title: 'Mi Vendo', artist: 'Renato Zero', genre: 'Pop', difficulty: 3, year: 1973, popularity: 89 },
+                { title: 'Cercami', artist: 'Renato Zero', genre: 'Pop', difficulty: 4, year: 1980, popularity: 88 },
+                
+                // Antonello Venditti
+                { title: 'Roma Capoccia', artist: 'Antonello Venditti', genre: 'Pop', difficulty: 3, year: 1972, popularity: 93 },
+                { title: 'Notte Prima degli Esami', artist: 'Antonello Venditti', genre: 'Pop', difficulty: 3, year: 1984, popularity: 95 },
+                { title: 'Ci Vorrebbe un Amico', artist: 'Antonello Venditti', genre: 'Pop', difficulty: 3, year: 1984, popularity: 91 },
+                { title: 'Alta Marea', artist: 'Antonello Venditti', genre: 'Pop', difficulty: 4, year: 1991, popularity: 90 },
+                { title: 'Che Fantastica Storia è la Vita', artist: 'Antonello Venditti', genre: 'Pop', difficulty: 3, year: 2003, popularity: 88 },
+                
+                // Lucio Dalla
+                { title: 'Caruso', artist: 'Lucio Dalla', genre: 'Pop', difficulty: 5, year: 1986, popularity: 97 },
+                { title: 'L\'Anno che Verrà', artist: 'Lucio Dalla', genre: 'Pop', difficulty: 4, year: 1979, popularity: 94 },
+                { title: 'Attenti al Lupo', artist: 'Lucio Dalla', genre: 'Pop', difficulty: 3, year: 1990, popularity: 91 },
+                { title: 'Futura', artist: 'Lucio Dalla', genre: 'Pop', difficulty: 4, year: 1979, popularity: 90 },
+                { title: 'Come è Profondo il Mare', artist: 'Lucio Dalla', genre: 'Pop', difficulty: 4, year: 1977, popularity: 92 },
+                
+                // Pooh
+                { title: 'Pensiero', artist: 'Pooh', genre: 'Pop', difficulty: 3, year: 1971, popularity: 91 },
+                { title: 'Piccola Katy', artist: 'Pooh', genre: 'Pop', difficulty: 3, year: 1968, popularity: 90 },
+                { title: 'Tanta Voglia di Lei', artist: 'Pooh', genre: 'Pop', difficulty: 3, year: 1971, popularity: 89 },
+                { title: 'Chi Fermerà la Musica', artist: 'Pooh', genre: 'Pop', difficulty: 3, year: 1981, popularity: 88 },
+                
+                // Riccardo Cocciante
+                { title: 'Bella Senz\'Anima', artist: 'Riccardo Cocciante', genre: 'Pop', difficulty: 4, year: 1974, popularity: 92 },
+                { title: 'Margherita', artist: 'Riccardo Cocciante', genre: 'Pop', difficulty: 3, year: 1976, popularity: 90 },
+                { title: 'Quando Finisce un Amore', artist: 'Riccardo Cocciante', genre: 'Pop', difficulty: 4, year: 1983, popularity: 89 },
+                
+                // Gianna Nannini
+                { title: 'Bello e Impossibile', artist: 'Gianna Nannini', genre: 'Rock', difficulty: 3, year: 1986, popularity: 92 },
+                { title: 'I Maschi', artist: 'Gianna Nannini', genre: 'Rock', difficulty: 4, year: 1987, popularity: 90 },
+                { title: 'Fotoromanza', artist: 'Gianna Nannini', genre: 'Rock', difficulty: 3, year: 1984, popularity: 89 },
+                { title: 'Meravigliosa Creatura', artist: 'Gianna Nannini', genre: 'Rock', difficulty: 4, year: 1995, popularity: 88 },
+                
+                // Mina
+                { title: 'Se Telefonando', artist: 'Mina', genre: 'Pop', difficulty: 5, year: 1966, popularity: 96 },
+                { title: 'Grande Grande Grande', artist: 'Mina', genre: 'Pop', difficulty: 4, year: 1972, popularity: 94 },
+                { title: 'Parole Parole', artist: 'Mina', genre: 'Pop', difficulty: 4, year: 1972, popularity: 93 },
+                { title: 'Il Cielo in una Stanza', artist: 'Mina', genre: 'Pop', difficulty: 4, year: 1960, popularity: 95 },
+                
+                // Mia Martini
+                { title: 'Almeno tu nell\'universo', artist: 'Mia Martini', genre: 'Pop', difficulty: 5, year: 1989, popularity: 94 },
+                { title: 'Minuetto', artist: 'Mia Martini', genre: 'Pop', difficulty: 4, year: 1973, popularity: 92 },
+                { title: 'E Non Finisce Mica il Cielo', artist: 'Mia Martini', genre: 'Pop', difficulty: 4, year: 1982, popularity: 90 },
+                
+                // Moderni
+                { title: 'Occidentali\'s Karma', artist: 'Francesco Gabbani', genre: 'Pop', difficulty: 3, year: 2017, popularity: 87 },
+                { title: 'Soldi', artist: 'Mahmood', genre: 'Pop', difficulty: 3, year: 2019, popularity: 89 },
+                { title: 'Brividi', artist: 'Mahmood & Blanco', genre: 'Pop', difficulty: 3, year: 2022, popularity: 91 },
+                { title: 'Musica Leggerissima', artist: 'Colapesce Dimartino', genre: 'Indie', difficulty: 3, year: 2021, popularity: 85 },
+                
+                // Dance & Electronic
+                { title: 'One More Time', artist: 'Daft Punk', genre: 'Electronic', difficulty: 2, year: 2000, popularity: 90 },
+                { title: 'Titanium', artist: 'David Guetta ft. Sia', genre: 'Dance', difficulty: 3, year: 2011, popularity: 89 },
+                { title: 'Wake Me Up', artist: 'Avicii', genre: 'Electronic', difficulty: 3, year: 2013, popularity: 91 },
+                
+                // Alternative & Indie
+                { title: 'Mr. Brightside', artist: 'The Killers', genre: 'Alternative', difficulty: 3, year: 2003, popularity: 88 },
+                { title: 'Somebody That I Used to Know', artist: 'Gotye', genre: 'Alternative', difficulty: 3, year: 2011, popularity: 87 },
+                { title: 'Radioactive', artist: 'Imagine Dragons', genre: 'Alternative', difficulty: 3, year: 2012, popularity: 89 },
+                
+                // Reggaeton & Latin
+                { title: 'Gasolina', artist: 'Daddy Yankee', genre: 'Reggaeton', difficulty: 3, year: 2004, popularity: 85 },
+                { title: 'Con Altura', artist: 'Rosalía & J Balvin', genre: 'Reggaeton', difficulty: 4, year: 2019, popularity: 83 },
+                { title: 'Bésame Mucho', artist: 'Consuelo Velázquez', genre: 'Latin', difficulty: 3, year: 1940, popularity: 90 },
+                
+                // Country
+                { title: 'Sweet Caroline', artist: 'Neil Diamond', genre: 'Country', difficulty: 2, year: 1969, popularity: 94 },
+                { title: 'Friends in Low Places', artist: 'Garth Brooks', genre: 'Country', difficulty: 2, year: 1990, popularity: 86 },
+                
+                // Classici Internazionali
+                { title: 'My Way', artist: 'Frank Sinatra', genre: 'Jazz', difficulty: 4, year: 1969, popularity: 95 },
+                { title: 'What a Wonderful World', artist: 'Louis Armstrong', genre: 'Jazz', difficulty: 2, year: 1967, popularity: 93 },
+                { title: 'Fly Me to the Moon', artist: 'Frank Sinatra', genre: 'Jazz', difficulty: 3, year: 1964, popularity: 91 },
+                
+                // Pop Moderno
+                { title: 'As It Was', artist: 'Harry Styles', genre: 'Pop', difficulty: 2, year: 2022, popularity: 94 },
+                { title: 'Heat Waves', artist: 'Glass Animals', genre: 'Alternative', difficulty: 2, year: 2020, popularity: 88 },
+                { title: 'Good 4 U', artist: 'Olivia Rodrigo', genre: 'Pop', difficulty: 3, year: 2021, popularity: 89 },
+                { title: 'Industry Baby', artist: 'Lil Nas X & Jack Harlow', genre: 'Hip-Hop', difficulty: 4, year: 2021, popularity: 86 },
+                
+                // Più canzoni italiane
+                { title: 'Con te Partirò', artist: 'Andrea Bocelli', genre: 'Opera', difficulty: 5, year: 1995, popularity: 92 },
+                { title: 'Caruso', artist: 'Lucio Dalla', genre: 'Pop', difficulty: 4, year: 1986, popularity: 90 },
+                { title: 'Almeno tu nell\'universo', artist: 'Mia Martini', genre: 'Pop', difficulty: 4, year: 1989, popularity: 87 },
+                { title: 'Generale', artist: 'Francesco De Gregori', genre: 'Folk', difficulty: 3, year: 1978, popularity: 85 }
+            ];
+
+            // Enhanced search - filter based on title, artist, or genre
+            const filtered = mockSongs.filter(song => {
+                const searchTerm = query.toLowerCase();
+                return song.title.toLowerCase().includes(searchTerm) ||
+                       song.artist.toLowerCase().includes(searchTerm) ||
+                       song.genre.toLowerCase().includes(searchTerm);
+            });
+
+            // Sort by popularity and return top 8 results
+            return filtered.sort((a, b) => b.popularity - a.popularity).slice(0, 8);
+        }
+
+        function displaySearchResults(results) {
+            const container = document.getElementById('searchResults');
+            container.innerHTML = '';
+
+            if (results.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 col-span-2">Nessuna canzone trovata. Prova con "Queen", "Beatles", "Adele" o "rock"</div>';
+                return;
+            }
+
+            results.forEach((song, index) => {
+                const songCard = document.createElement('div');
+                const stars = '★'.repeat(song.difficulty) + '☆'.repeat(5 - song.difficulty);
+                const colors = [
+                    'from-red-500 to-pink-500',
+                    'from-blue-500 to-purple-500',
+                    'from-green-500 to-teal-500',
+                    'from-yellow-500 to-orange-500',
+                    'from-indigo-500 to-purple-500',
+                    'from-pink-500 to-rose-500',
+                    'from-cyan-500 to-blue-500',
+                    'from-purple-500 to-indigo-500'
+                ];
+                
+                // Genre icons
+                const genreIcons = {
+                    'Pop': '🎵',
+                    'Rock': '🎸',
+                    'Hip-Hop': '🎤',
+                    'R&B': '🎶',
+                    'Electronic': '🎛️',
+                    'Dance': '💃',
+                    'Alternative': '🎧',
+                    'Ballad': '💝',
+                    'Jazz': '🎺',
+                    'Country': '🤠',
+                    'Reggaeton': '🌴',
+                    'Latin': '🌹',
+                    'Opera': '🎭',
+                    'Folk': '🪕',
+                    'Soul': '✨',
+                    'Synthpop': '🌟'
+                };
+                
+                songCard.className = `bg-gradient-to-r ${colors[index % colors.length]} p-4 rounded-lg cursor-pointer hover:scale-105 transition-transform shadow-lg`;
+                songCard.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <h4 class="font-bold text-sm flex-1 pr-2">${song.title}</h4>
+                        <span class="text-lg">${genreIcons[song.genre] || '🎵'}</span>
+                    </div>
+                    <p class="text-xs opacity-80 mb-1">${song.artist}</p>
+                    <div class="flex justify-between items-center">
+                        <div class="text-xs text-yellow-300">${stars}</div>
+                        <div class="text-xs opacity-70">${song.year}</div>
+                    </div>
+                    <div class="text-xs opacity-60 mt-1">${song.genre}</div>
+                `;
+                songCard.onclick = () => selectOnlineSong(song);
+                container.appendChild(songCard);
+            });
+        }
+
+        function selectOnlineSong(songData) {
+            // Generate lyrics based on song data
+            const generatedSong = generateSongFromData(songData);
+            gameState.currentSong = generatedSong;
+            
+            document.getElementById('songSelection').classList.add('hidden');
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('currentSong').textContent = `${generatedSong.title} - ${songData.artist}`;
+            setupLyrics();
+        }
+
+        function generateSongFromData(songData) {
+            // Generate sample lyrics based on song type and difficulty
+            const sampleLyrics = {
+                'Perfect': [
+                    'I found a love for me',
+                    'Darling, just dive right in',
+                    'And follow my lead',
+                    'Well, I found a girl, beautiful and sweet',
+                    'Oh, I never knew you were the someone',
+                    'Waiting for me',
+                    'We were just kids when we fell in love',
+                    'Not knowing what it was'
+                ],
+                'Shape of You': [
+                    'The club isn\'t the best place to find a lover',
+                    'So the bar is where I go',
+                    'Me and my friends at the table doing shots',
+                    'Drinking fast and then we talk slow',
+                    'Come over and start up a conversation',
+                    'With just me',
+                    'And trust me I\'ll give it a chance now',
+                    'Take my hand, stop, put Van the Man on the jukebox'
+                ],
+                'Someone Like You': [
+                    'I heard that you\'re settled down',
+                    'That you found a girl and you\'re married now',
+                    'I heard that your dreams came true',
+                    'Guess she gave you things I didn\'t give to you',
+                    'Old friend, why are you so shy?',
+                    'Ain\'t like you to hold back',
+                    'Or hide from the light',
+                    'I hate to turn up out of the blue uninvited'
+                ],
+                'We Will Rock You': [
+                    'Buddy, you\'re a boy, make a big noise',
+                    'Playing in the street, gonna be a big man someday',
+                    'You got mud on your face, you big disgrace',
+                    'Kicking your can all over the place, singin\'',
+                    'We will, we will rock you',
+                    'We will, we will rock you',
+                    'Buddy, you\'re a young man, hard man',
+                    'Shouting in the street, gonna take on the world someday'
+                ],
+                'Hey Jude': [
+                    'Hey Jude, don\'t make it bad',
+                    'Take a sad song and make it better',
+                    'Remember to let her into your heart',
+                    'Then you can start to make it better',
+                    'Hey Jude, don\'t be afraid',
+                    'You were made to go out and get her',
+                    'The minute you let her under your skin',
+                    'Then you begin to make it better'
+                ],
+                'Blinding Lights': [
+                    'Yeah, I\'ve been trying to call',
+                    'I\'ve been on my own for long enough',
+                    'Maybe you can show me how to love, maybe',
+                    'I feel like I\'m just missing something',
+                    'When you\'re gone',
+                    'I said, ooh, I\'m blinded by the lights',
+                    'No, I can\'t sleep until I feel your touch',
+                    'I said, ooh, I\'m drowning in the night'
+                ],
+                'Bad Guy': [
+                    'White shirt now red, my bloody nose',
+                    'Sleeping, you\'re on your tippy toes',
+                    'Creeping around like no one knows',
+                    'Think you\'re so criminal',
+                    'Bruises on both my knees for you',
+                    'Don\'t say thank you or please',
+                    'I do what I want when I\'m wanting to',
+                    'My soul? So cynical'
+                ],
+                'Shallow': [
+                    'Tell me somethin\', girl',
+                    'Are you happy in this modern world?',
+                    'Or do you need more?',
+                    'Is there somethin\' else you\'re searchin\' for?',
+                    'I\'m falling',
+                    'In all the good times I find myself',
+                    'Longin\' for change',
+                    'And in the bad times I fear myself'
+                ],
+                'My Way': [
+                    'And now, the end is near',
+                    'And so I face the final curtain',
+                    'My friend, I\'ll say it clear',
+                    'I\'ll state my case, of which I\'m certain',
+                    'I\'ve lived a life that\'s full',
+                    'I traveled each and every highway',
+                    'And more, much more than this',
+                    'I did it my way'
+                ],
+                'Sweet Caroline': [
+                    'Where it began, I can\'t begin to knowing',
+                    'But then I know it\'s growing strong',
+                    'Was in the spring',
+                    'And spring became the summer',
+                    'Who\'d have believed you\'d come along',
+                    'Hands, touching hands',
+                    'Reaching out, touching me, touching you',
+                    'Sweet Caroline'
+                ],
+                'Beggin\'': [
+                    'Put your loving hand out, baby',
+                    'I\'m beggin\'',
+                    'Beggin\', beggin\' you',
+                    'Put your loving hand out, baby',
+                    'Beggin\', beggin\' you',
+                    'Put your loving hand out, darling',
+                    'Riding high, when I was king',
+                    'I played it hard and fast, \'cause I had everything'
+                ],
+                'Azzurro': [
+                    'Azzurro, il pomeriggio è troppo azzurro',
+                    'E lungo per me',
+                    'Mi accorgo di non avere più risorse',
+                    'Senza di te',
+                    'E allora io quasi quasi prendo il treno',
+                    'E vengo, vengo da te',
+                    'Il treno dei desideri',
+                    'Nei miei pensieri all\'incontrario va'
+                ],
+                'Con te Partirò': [
+                    'Quando sono solo',
+                    'Sogno all\'orizzonte',
+                    'E mancan le parole',
+                    'Sì lo so che non c\'è luce',
+                    'In una stanza quando manca il sole',
+                    'Se non ci sei tu con me, con me',
+                    'Su le finestre',
+                    'Mostra a tutti il mio cuore'
+                ],
+                'Titanium': [
+                    'You shout it out',
+                    'But I can\'t hear a word you say',
+                    'I\'m talking loud, not saying much',
+                    'I\'m criticized, but all your bullets ricochet',
+                    'You shoot me down, but I get up',
+                    'I\'m bulletproof, nothing to lose',
+                    'Fire away, fire away',
+                    'Ricochet, you take your aim'
+                ],
+                'Mr. Brightside': [
+                    'I\'m coming out of my cage',
+                    'And I\'ve been doing just fine',
+                    'Gotta gotta be down',
+                    'Because I want it all',
+                    'It started out with a kiss',
+                    'How did it end up like this?',
+                    'It was only a kiss, it was only a kiss',
+                    'Now I\'m falling asleep'
+                ]
+            };
+
+            // Add more specific lyrics for Max Pezzali and 883 songs
+            const additionalLyrics = {
+                'Hanno Ucciso l\'Uomo Ragno': [
+                    'Hanno ucciso l\'Uomo Ragno',
+                    'Chi sia stato non si sa',
+                    'Forse quelli della mala del Brenta',
+                    'O forse la pubblicità',
+                    '',
+                    'Hanno ucciso l\'Uomo Ragno',
+                    'Non si sa neanche il perché',
+                    'Forse aveva troppi soldi',
+                    'O forse non ne aveva per sé',
+                    '',
+                    'Ma chi se ne frega dell\'Uomo Ragno',
+                    'Che cosa ci può importare',
+                    'Se hanno ucciso l\'Uomo Ragno',
+                    'Noi abbiamo altri problemi da affrontare',
+                    '',
+                    'Hanno ucciso l\'Uomo Ragno',
+                    'E con lui la fantasia',
+                    'Dei bambini di tutto il mondo',
+                    'Che non sanno ancora la verità',
+                    '',
+                    'Ma l\'Uomo Ragno era un mito',
+                    'Per tutti noi che eravamo bambini',
+                    'E ora che siamo cresciuti',
+                    'Ci mancano quegli eroi',
+                    '',
+                    'Hanno ucciso l\'Uomo Ragno',
+                    'Ma non la nostra immaginazione',
+                    'Perché dentro di noi',
+                    'Vive ancora quella magia'
+                ],
+                'Come Mai': [
+                    'Come mai non riesci a capire',
+                    'Che non è così facile',
+                    'Dimenticare una persona',
+                    'Che hai amato davvero',
+                    '',
+                    'Come mai non riesci a vedere',
+                    'Che sto soffrendo anch\'io',
+                    'Per questa storia finita',
+                    'Che non volevo finisse così',
+                    '',
+                    'Come mai, come mai',
+                    'Non riesci a capire',
+                    'Come mai, come mai',
+                    'Non vuoi più sentire',
+                    '',
+                    'Come mai hai deciso',
+                    'Di andartene via',
+                    'Senza neanche provare',
+                    'A salvare quello che c\'era tra noi',
+                    '',
+                    'Come mai, come mai',
+                    'Tutto è finito così',
+                    'Come mai, come mai',
+                    'Non torni più qui',
+                    '',
+                    'E ora che sei lontana',
+                    'Mi accorgo di quanto',
+                    'Tu fossi importante',
+                    'Nella mia vita'
+                ],
+                'L\'Universo Tranne Noi': [
+                    'L\'universo tranne noi',
+                    'Che restiamo qui',
+                    'Fermi in questo tempo',
+                    'Che non passa mai',
+                    '',
+                    'Tutto gira intorno',
+                    'Ma noi siamo qui',
+                    'Come due pianeti',
+                    'Che si sono persi',
+                    '',
+                    'L\'universo tranne noi',
+                    'Che non sappiamo più',
+                    'Dove stiamo andando',
+                    'E cosa stiamo facendo',
+                    '',
+                    'Ma forse è meglio così',
+                    'Restare qui insieme',
+                    'Mentre tutto cambia',
+                    'Noi rimaniamo uguali',
+                    '',
+                    'L\'universo tranne noi',
+                    'Che abbiamo paura',
+                    'Di crescere davvero',
+                    'E di diventare adulti',
+                    '',
+                    'Perché essere grandi',
+                    'Significa perdere',
+                    'La magia dei sogni',
+                    'E la forza di sperare'
+                ],
+                'Nessun Rimpianto': [
+                    'Nessun rimpianto per quello che è stato',
+                    'Nessun rimpianto per quello che ho fatto',
+                    'Perché ogni scelta che ho preso',
+                    'Mi ha portato fino a qui',
+                    '',
+                    'Nessun rimpianto per gli errori',
+                    'Che mi hanno insegnato a vivere',
+                    'Nessun rimpianto per le lacrime',
+                    'Che mi hanno fatto crescere',
+                    '',
+                    'Guardo avanti senza voltarmi',
+                    'Il passato è passato',
+                    'E il futuro mi aspetta',
+                    'Con nuove possibilità',
+                    '',
+                    'Nessun rimpianto per l\'amore',
+                    'Che ho dato e che ho perso',
+                    'Perché amare è sempre giusto',
+                    'Anche quando fa soffrire',
+                    '',
+                    'Nessun rimpianto per i sogni',
+                    'Che non si sono realizzati',
+                    'Perché sognare è importante',
+                    'Anche se poi si sveglia'
+                ]
+            };
+
+            // Merge additional lyrics with existing ones
+            const allLyrics = { ...sampleLyrics, ...additionalLyrics };
+
+            // Use specific lyrics if available, otherwise generate complete generic ones
+            let lyrics = allLyrics[songData.title] || [
+                `${songData.title} is a beautiful song`,
+                `By the amazing ${songData.artist}`,
+                `This is a ${songData.genre} masterpiece`,
+                `From the year ${songData.year}`,
+                '',
+                `Sing along with all your heart`,
+                `Feel the rhythm and the beat`,
+                `Let the music set you free`,
+                `Dance like nobody\'s watching`,
+                '',
+                `This is your moment to shine`,
+                `On this karaoke stage tonight`,
+                `Every note and every line`,
+                `Makes everything feel so right`,
+                '',
+                `${songData.artist} would be proud`,
+                `To hear you sing this song so loud`,
+                `The melody fills up the room`,
+                `And chases away all the gloom`,
+                '',
+                `So keep on singing, don\'t you stop`,
+                `Until you reach the very top`,
+                `Of every chorus, every verse`,
+                `Let the music break the curse`,
+                '',
+                `${songData.title} will live on`,
+                `In every heart, in every song`,
+                `That\'s sung with passion, sung with soul`,
+                `Making broken spirits whole`,
+                '',
+                `Thank you for this performance`,
+                `You\'ve shown true musical brilliance`,
+                `${songData.artist} and ${songData.title}`,
+                `Forever in our hearts will stay`
+            ];
+
+            // Adjust timing based on difficulty
+            const baseInterval = songData.difficulty <= 2 ? 4 : songData.difficulty <= 3 ? 3.5 : 3;
+            const timing = lyrics.map((_, index) => index * baseInterval);
+            const duration = timing[timing.length - 1] + baseInterval;
+
+            return {
+                title: songData.title,
+                lyrics: lyrics,
+                timing: timing,
+                duration: duration
+            };
+        }
+
+        // Quick search function for suggestion buttons
+        function quickSearch(term) {
+            document.getElementById('searchInput').value = term;
+            searchSongs();
+        }
+
+        // Add Enter key support for search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchSongs();
+            }
+        });
+
+        // Initialize UI
+        updateUI();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9674ba88919fbacf',t:'MTc1Mzg3NzE3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
