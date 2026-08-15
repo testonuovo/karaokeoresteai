@@ -1349,60 +1349,66 @@ Amore mio portami via
         }
 
         function startLyricsAnimation() {
-            const lyricsInterval = setInterval(() => {
-                if (!gameState.isPlaying) {
-                    if (!gameState.isPaused) {
-                        clearInterval(lyricsInterval);
-                    }
-                    return;
-                }
 
-                const elapsed = (Date.now() - gameState.startTime) / 1000;
-                const currentTiming = gameState.currentSong.timing[gameState.currentLineIndex];
-                
-                if (elapsed >= currentTiming && gameState.currentLineIndex < gameState.currentSong.lyrics.length) {
-                    // Highlight current line
-                    document.querySelectorAll('.lyrics-line').forEach(line => {
-                        line.classList.remove('active-line');
-                        line.classList.add('opacity-50');
-                    });
-                    
-                    const currentLine = document.getElementById(`line-${gameState.currentLineIndex}`);
-                    if (currentLine) {
-                        currentLine.classList.add('active-line', 'slide-in');
-                        currentLine.classList.remove('opacity-50');
-                    }
-                    
-                    gameState.currentLineIndex++;
-                }
-            }, 100);
+    const lyricsInterval = setInterval(() => {
+
+        if (!gameState.isPlaying) {
+
+            if (!gameState.isPaused) {
+                clearInterval(lyricsInterval);
+            }
+
+            return;
         }
 
-        // Microphone interaction simulation
-        document.getElementById('micButton').addEventListener('click', function() {
-            if (!gameState.isPlaying) return;
-            
-            this.classList.add('pulse');
-            setTimeout(() => this.classList.remove('pulse'), 300);
-            
-            // Simulate singing feedback
-            const feedbacks = ['Perfetto! 🎵', 'Ottimo! ⭐', 'Bravo! 🎤', 'Fantastico! 🌟'];
-            const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-            
-            // Add points
-            const points = Math.floor(Math.random() * 50) + 50;
-            gameState.score += points;
-            gameState.combo++;
-            gameState.totalHits++;
-            
-            if (gameState.combo > gameState.maxCombo) {
-                gameState.maxCombo = gameState.combo;
-            }
-            
-            updateUI();
-            showFeedback(feedback, points);
-        });
+        if (
+            !gameState.currentSong ||
+            gameState.currentLineIndex >= gameState.currentSong.lyrics.length
+        ) {
+            clearInterval(lyricsInterval);
+            return;
+        }
 
+        const elapsed =
+            (Date.now() - gameState.startTime) / 1000;
+
+        const currentTiming =
+            gameState.currentSong.timing[
+                gameState.currentLineIndex
+            ];
+
+        if (elapsed >= currentTiming) {
+
+            document.querySelectorAll('.lyrics-line')
+                .forEach(line => {
+
+                    line.classList.remove('active-line');
+                    line.classList.add('opacity-50');
+
+                });
+
+            const currentLine =
+                document.getElementById(
+                    `line-${gameState.currentLineIndex}`
+                );
+
+            if (currentLine) {
+
+                currentLine.classList.add(
+                    'active-line',
+                    'slide-in'
+                );
+
+                currentLine.classList.remove(
+                    'opacity-50'
+                );
+            }
+
+            gameState.currentLineIndex++;
+        }
+
+    }, 100);
+}
         function updateUI() {
             document.getElementById('score').textContent = gameState.score;
             document.getElementById('combo').textContent = `${gameState.combo}x`;
