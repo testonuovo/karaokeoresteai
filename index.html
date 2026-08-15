@@ -1804,7 +1804,32 @@ Amore mio portami via
                 container.appendChild(songCard);
             });
         }
+function startSinging() {
+    console.log("START SINGING");
 
+    if (!gameState.currentSong) {
+        console.error("Nessuna canzone selezionata");
+        return;
+    }
+
+    if (gameState.isPaused) {
+        resumeSinging();
+        return;
+    }
+
+    gameState.isPlaying = true;
+    gameState.isPaused = false;
+    gameState.startTime = Date.now();
+    gameState.currentLineIndex = 0;
+    gameState.totalNotes = gameState.currentSong.lyrics.length;
+
+    document.getElementById('startBtn').classList.add('hidden');
+    document.getElementById('pauseBtn').classList.remove('hidden');
+    document.getElementById('songStatus').textContent = 'Cantando...';
+
+    startTimer();
+    startLyricsAnimation();
+}
         function selectOnlineSong(songData) {
             // Generate lyrics based on song data
             const generatedSong = generateSongFromData(songData);
