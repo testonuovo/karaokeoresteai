@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karaoke Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        h1{
+            color:red;
+        }
+        h2{
+            color:blue;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            90% { transform: scale(1.10); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #fbbf24; }
+            50% { box-shadow: 0 0 20px #fbbf24, 0 0 30px #fbbf24; }
+            100% { box-shadow: 0 0 5px #fbbf24; }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        @keyframes celebrate {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.2) rotate(-5deg); }
+            50% { transform: scale(1.3) rotate(5deg); }
+            75% { transform: scale(1.2) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        .bounce { animation: bounce 2s infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        .pulse { animation: pulse 0.3s ease-in-out; }
+        .glow { animation: glow 1s ease-in-out infinite; }
+        .shake { animation: shake 0.5s ease-in-out; }
+        .celebrate { animation: celebrate 0.6s ease-in-out; }
+        
+        .lyrics-line {
+            transition: all 0.3s ease;
+            padding: 12px 20px;
+            margin: 6px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .lyrics-line:hover {
+            background-color: rgba(75, 85, 99, 0.3);
+        }
+        
+        .active-line {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.3));
+            color: #fbbf24;
+            font-weight: bold;
+            transform: scale(1.05);
+            border: 2px solid #fbbf24;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+        }
+        
+        .sung-line {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 2px solid #22c55e;
+        }
+        
+        .missed-line {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 2px solid #ef4444;
+        }
+        
+        .microphone {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transition: all 0.3s ease;
+        }
+        
+        .microphone:hover {
+            background: linear-gradient(135deg, #b91c1c, #991b1b);
+            transform: scale(1.1);
+        }
+        
+        .stage {
+            background: linear-gradient(135deg, #1e40af, #1d4ed8);
+        }
+        
+        .progress-bar {
+            transition: width 0.1s linear;
+        }
+        
+        .score-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            pointer-events: none;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .mic-button-active {
+            background: linear-gradient(135deg, #059669, #047857) !important;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+        }
+        
+        .countdown {
+            font-size: 4rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <div class="stage p-6 text-center">
+        <h1 class="text-4xl font-bold mb-2 bounce">🎤 karaoke 🎵</h1>
+        <div class="flex justify-center items-center space-x-8">
+            <div class="bg-white/20 rounded-lg p-3">
+                <span class="text-sm">Punteggio</span>
+                <div id="score" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="bg-white/20 rounded-lg p-3">
+                <span class="text-sm">Combo</span>
+                <div id="combo" class="text-2xl font-bold">0x</div>
+            </div>
+            <div class="bg-white/20 rounded-lg p-3">
+                <span class="text-sm">Tempo</span>
+                <div id="timer" class="text-2xl font-bold">0:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Song Selection -->
+    <div id="songSelection" class="max-w-4xl mx-auto p-6">
+        <h2 class="text-2xl font-bold mb-6 text-center">Scegli la tua canzone</h2>
+        
+        <!-- Search Section -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-bold mb-4 text-center">🔍 Cerca nuove canzoni online</h3>
+            <div class="flex gap-4 mb-4">
+                <input type="text" id="searchInput" placeholder="Cerca artista e titolo (es: Ed Sheeran Perfect)" 
+                       class="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
+                <button onclick="searchSongs()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-bold transition-colors">
+                    🔍 Cerca
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm text-gray-400 mb-2">💡 Suggerimenti di ricerca:</p>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="quickSearch('Queen')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Queen</button>
+                    <button onclick="quickSearch('Beatles')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Beatles</button>
+                    <button onclick="quickSearch('Laura Pausini')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Laura Pausini</button>
+                    <button onclick="quickSearch('Max Pezzali')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Max Pezzali</button>
+                    <button onclick="quickSearch('Tiziano Ferro')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs transition-colors">Tiziano Ferro</button>
+                </div>
+            </div>
+            <div id="searchResults" class="space-y-2"></div>
+        </div>
+
+        <!-- Pre-loaded Songs -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer" onclick="selectSong('bohemian')">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">🎸</div>
+                    <div>
+                        <h3 class="font-bold">Bohemian Rhapsody</h3>
+                        <p class="text-gray-400">Queen</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-yellow-400">⭐⭐⭐⭐⭐</span>
+                            <span class="text-sm text-gray-500">Difficoltà: Alta</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer" onclick="selectSong('imagine')">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">🎹</div>
+                    <div>
+                        <h3 class="font-bold">Imagine</h3>
+                        <p class="text-gray-400">John Lennon</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-yellow-400">⭐⭐⭐</span>
+                            <span class="text-sm text-gray-500">Difficoltà: Media</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer" onclick="selectSong('volare')">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">🇮🇹</div>
+                    <div>
+                        <h3 class="font-bold">Volare</h3>
+                        <p class="text-gray-400">Domenico Modugno</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-yellow-400">⭐⭐⭐⭐</span>
+                            <span class="text-sm text-gray-500">Difficoltà: Media</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer" onclick="selectSong('azzurro')">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">☀️</div>
+                    <div>
+                        <h3 class="font-bold">Azzurro</h3>
+                        <p class="text-gray-400">Adriano Celentano</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-yellow-400">⭐⭐</span>
+                            <span class="text-sm text-gray-500">Difficoltà: Facile</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer" onclick="selectSong('yesterday')">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">🎵</div>
+                    <div>
+                        <h3 class="font-bold">Yesterday</h3>
+                        <p class="text-gray-400">The Beatles</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-yellow-400">⭐⭐⭐</span>
+                            <span class="text-sm text-gray-500">Difficoltà: Media</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer" onclick="selectSong('caruso')">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">🌊</div>
+                    <div>
+                        <h3 class="font-bold">Caruso</h3>
+                        <p class="text-gray-400">Lucio Dalla</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-yellow-400">⭐⭐⭐⭐</span>
+                            <span class="text-sm text-gray-500">Difficoltà: Alta</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer" onclick="selectSong('lavidaloca')">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">💃</div>
+                    <div>
+                        <h3 class="font-bold">La Vida Loca</h3>
+                        <p class="text-gray-400">Ricky Martin</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-yellow-400">⭐⭐⭐</span>
+                            <span class="text-sm text-gray-500">Difficoltà: Media</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer" onclick="selectSong('mambo')">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">🕺</div>
+                    <div>
+                        <h3 class="font-bold">Mambo No. 5</h3>
+                        <p class="text-gray-400">Lou Bega</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="text-yellow-400">⭐⭐</span>
+                            <span class="text-sm text-gray-500">Difficoltà: Facile</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Countdown Screen -->
+    <div id="countdownScreen" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div id="countdownNumber" class="countdown text-yellow-400 mb-4">3</div>
+            <div class="text-xl">Preparati a cantare!</div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden max-w-4xl mx-auto p-6">
+        <!-- Song Info -->
+        <div class="bg-gray-800 rounded-lg p-4 mb-6 text-center">
+            <h2 id="currentSong" class="text-2xl font-bold mb-2"></h2>
+            <p id="currentArtist" class="text-gray-400 mb-4"></p>
+            
+            <!-- Progress Bar -->
+            <div class="bg-gray-700 rounded-full h-3 mb-4">
+                <div id="progressBar" class="progress-bar bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full" style="width: 0%"></div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex justify-center space-x-4">
+                <button id="playBtn" onclick="togglePlay()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-bold transition-colors">
+                    ▶️ Inizia
+                </button>
+                <button onclick="pauseGame()" class="bg-yellow-600 hover:bg-yellow-700 px-6 py-2 rounded-lg font-bold transition-colors">
+                    ⏸️ Pausa
+                </button>
+                <button onclick="stopGame()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-bold transition-colors">
+                    ⏹️ Stop
+                </button>
+                <button onclick="backToSelection()" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition-colors">
+                    🔙 Indietro
+                </button>
+            </div>
+        </div>
+
+        <!-- Lyrics Display -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-bold mb-4 text-center">🎵 Testo</h3>
+            <div class="text-center mb-4">
+                <div class="text-sm text-gray-400">💡 Clicca il microfono quando la riga è evidenziata in giallo!</div>
+            </div>
+            <div id="lyricsContainer" class="text-center space-y-2 max-h-96 overflow-y-auto">
+                <!-- Lyrics will be populated here -->
+            </div>
+        </div>
+
+        <!-- Microphone Simulation -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h3 class="text-xl font-bold mb-4 text-center">🎤 Canta ora!</h3>
+            <div class="text-center">
+                <div class="microphone w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl glow cursor-pointer" onclick="singLine()">
+                    🎤
+                </div>
+                <p class="text-gray-400 mb-4">Clicca il microfono quando canti la riga evidenziata!</p>
+                <button id="micBtn" onclick="singLine()" class="bg-purple-600 hover:bg-purple-700 px-8 py-3 rounded-lg font-bold text-xl transition-all duration-300">
+                    🎤 CANTA!
+                </button>
+                <div class="mt-4">
+                    <div class="text-sm text-gray-400">Prossima riga tra: <span id="nextLineTimer" class="text-yellow-400 font-bold">--</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="hidden max-w-4xl mx-auto p-6 text-center">
+        <div class="bg-gray-800 rounded-lg p-8">
+            <h2 class="text-3xl font-bold mb-6">🏆 Risultati Finali</h2>
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-yellow-600 rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="finalScore">0</div>
+                    <div class="text-sm">Punteggio Finale</div>
+                </div>
+                <div class="bg-blue-600 rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="accuracy">0%</div>
+                    <div class="text-sm">Precisione</div>
+                </div>
+                <div class="bg-green-600 rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="maxCombo">0x</div>
+                    <div class="text-sm">Combo Massima</div>
+                </div>
+            </div>
+            <div class="mb-6">
+                <div id="performance" class="text-6xl mb-4">⭐</div>
+                <div id="performanceText" class="text-2xl font-bold mb-2">Ottimo lavoro!</div>
+                <div id="performanceDetails" class="text-gray-400"></div>
+            </div>
+            <div class="space-x-4">
+                <button onclick="backToSelection()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold transition-colors">
+                    🎵 Nuova Canzone
+                </button>
+                <button onclick="restartSong()" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold transition-colors">
+                    🔄 Riprova
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let currentSongData = null;
+        let gameTimer = null;
+        let currentTime = 0;
+        let currentLineIndex = -1;
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let totalLines = 0;
+        let correctLines = 0;
+        let isPlaying = false;
+        let gameStarted = false;
+        let nextLineTimeout = null;
+
+        // Song Database with real lyrics and detailed timing
+        const songs = {
+            bohemian: {
+                title: "Bohemian Rhapsody",
+                artist: "Queen",
+                duration: 60,
+                lyrics: [
+                    { time: 2, text: "Is this the real life?", duration: 3 },
+                    { time: 6, text: "Is this just fantasy?", duration: 3 },
+                    { time: 10, text: "Caught in a landslide", duration: 3 },
+                    { time: 14, text: "No escape from reality", duration: 3 },
+                    { time: 18, text: "Open your eyes", duration: 2 },
+                    { time: 21, text: "Look up to the skies and see", duration: 3 },
+                    { time: 25, text: "I'm just a poor boy", duration: 3 },
+                    { time: 29, text: "I need no sympathy", duration: 3 },
+                    { time: 33, text: "Because I'm easy come, easy go", duration: 3 },
+                    { time: 37, text: "Little high, little low", duration: 3 },
+                    { time: 41, text: "Any way the wind blows", duration: 3 },
+                    { time: 45, text: "Doesn't really matter to me", duration: 4 },
+                    { time: 50, text: "To me...", duration: 3 },
+                    { time: 54, text: "Mama, just killed a man", duration: 4 }
+                ]
+            },
+            imagine: {
+                title: "Imagine",
+                artist: "John Lennon",
+                duration: 45,
+                lyrics: [
+                    { time: 2, text: "Imagine there's no heaven", duration: 4 },
+                    { time: 7, text: "It's easy if you try", duration: 3 },
+                    { time: 11, text: "No hell below us", duration: 3 },
+                    { time: 15, text: "Above us only sky", duration: 3 },
+                    { time: 19, text: "Imagine all the people", duration: 4 },
+                    { time: 24, text: "Living for today", duration: 3 },
+                    { time: 28, text: "Imagine there's no countries", duration: 4 },
+                    { time: 33, text: "It isn't hard to do", duration: 3 },
+                    { time: 37, text: "Nothing to kill or die for", duration: 4 },
+                    { time: 42, text: "And no religion too", duration: 3 }
+                ]
+            },
+            volare: {
+                title: "Volare",
+                artist: "Domenico Modugno",
+                duration: 50,
+                lyrics: [
+                    { time: 2, text: "Volare, oh oh", duration: 3 },
+                    { time: 6, text: "Cantare, oh oh oh oh", duration: 3 },
+                    { time: 10, text: "Nel blu dipinto di blu", duration: 4 },
+                    { time: 15, text: "Felice di stare lassù", duration: 3 },
+                    { time: 19, text: "E volavo, volavo felice", duration: 4 },
+                    { time: 24, text: "Più in alto del sole", duration: 3 },
+                    { time: 28, text: "Ed ancora più su", duration: 3 },
+                    { time: 32, text: "Mentre il mondo pian piano", duration: 4 },
+                    { time: 37, text: "Spariva lontano laggiù", duration: 4 },
+                    { time: 42, text: "Una musica dolce suonava", duration: 4 },
+                    { time: 47, text: "Soltanto per me", duration: 3 }
+                ]
+            },
+            azzurro: {
+                title: "Azzurro",
+                artist: "Adriano Celentano",
+                duration: 40,
+                lyrics: [
+                    { time: 2, text: "Azzurro", duration: 2 },
+                    { time: 5, text: "Il pomeriggio è troppo azzurro", duration: 4 },
+                    { time: 10, text: "E lungo per me", duration: 3 },
+                    { time: 14, text: "Mi accorgo", duration: 2 },
+                    { time: 17, text: "Di non avere più risorse", duration: 3 },
+                    { time: 21, text: "Senza di te", duration: 3 },
+                    { time: 25, text: "E allora", duration: 2 },
+                    { time: 28, text: "Io quasi quasi prendo il treno", duration: 4 },
+                    { time: 33, text: "E vengo, vengo da te", duration: 3 },
+                    { time: 37, text: "Il treno dei desideri", duration: 3 }
+                ]
+            },
+            yesterday: {
+                title: "Yesterday",
+                artist: "The Beatles",
+                duration: 35,
+                lyrics: [
+                    { time: 2, text: "Yesterday", duration: 2 },
+                    { time: 5, text: "All my troubles seemed so far away", duration: 4 },
+                    { time: 10, text: "Now it looks as though they're here to stay", duration: 4 },
+                    { time: 15, text: "Oh, I believe in yesterday", duration: 4 },
+                    { time: 20, text: "Suddenly", duration: 2 },
+                    { time: 23, text: "I'm not half the man I used to be", duration: 4 },
+                    { time: 28, text: "There's a shadow hanging over me", duration: 4 },
+                    { time: 33, text: "Oh, yesterday came suddenly", duration: 3 }
+                ]
+            },
+            caruso: {
+                title: "Caruso",
+                artist: "Lucio Dalla",
+                duration: 55,
+                lyrics: [
+                    { time: 3, text: "Qui dove il mare luccica", duration: 4 },
+                    { time: 8, text: "E tira forte il vento", duration: 3 },
+                    { time: 12, text: "Su una vecchia terrazza", duration: 3 },
+                    { time: 16, text: "Davanti al golfo di Surriento", duration: 4 },
+                    { time: 21, text: "Un uomo abbraccia una ragazza", duration: 4 },
+                    { time: 26, text: "Dopo che aveva pianto", duration: 3 },
+                    { time: 30, text: "Poi si schiarisce la voce", duration: 3 },
+                    { time: 34, text: "E ricomincia il canto", duration: 3 },
+                    { time: 38, text: "Te voglio bene assai", duration: 4 },
+                    { time: 43, text: "Ma tanto tanto bene sai", duration: 4 },
+                    { time: 48, text: "È una catena ormai", duration: 3 },
+                    { time: 52, text: "Che scioglie il sangue dint'e vene sai", duration: 4 }
+                ]
+            },
+            lavidaloca: {
+                title: "La Vida Loca",
+                artist: "Ricky Martin",
+                duration: 42,
+                lyrics: [
+                    { time: 2, text: "She's into superstitions", duration: 3 },
+                    { time: 6, text: "Black cats and voodoo dolls", duration: 3 },
+                    { time: 10, text: "I feel a premonition", duration: 3 },
+                    { time: 14, text: "That girl's gonna make me fall", duration: 3 },
+                    { time: 18, text: "She's into new sensations", duration: 3 },
+                    { time: 22, text: "New kicks in the candlelight", duration: 3 },
+                    { time: 26, text: "She's got a new addiction", duration: 3 },
+                    { time: 30, text: "For every day and night", duration: 3 },
+                    { time: 34, text: "She'll make you take your clothes off", duration: 3 },
+                    { time: 38, text: "And go dancing in the rain", duration: 4 }
+                ]
+            },
+            mambo: {
+                title: "Mambo No. 5",
+                artist: "Lou Bega",
+                duration: 38,
+                lyrics: [
+                    { time: 2, text: "One, two, three, four, five", duration: 3 },
+                    { time: 6, text: "Everybody in the car, so come on", duration: 3 },
+                    { time: 10, text: "Let's ride to the liquor store", duration: 3 },
+                    { time: 14, text: "Around the corner", duration: 2 },
+                    { time: 17, text: "The boys say they want some gin and juice", duration: 4 },
+                    { time: 22, text: "But I really don't wanna", duration: 3 },
+                    { time: 26, text: "Beer bust like I had last week", duration: 3 },
+                    { time: 30, text: "I must stay deep", duration: 2 },
+                    { time: 33, text: "Because talk is cheap", duration: 3 },
+                    { time: 37, text: "I like Angela, Pamela, Sandra and Rita", duration: 4 }
+                ]
+            }
+        };
+
+        // Search functionality with real API
+        async function searchSongs() {
+            const query = document.getElementById('searchInput').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (query.length < 3) {
+                resultsDiv.innerHTML = '<p class="text-gray-400 text-center">Inserisci almeno 3 caratteri per cercare</p>';
+                return;
+            }
+
+            // Show loading state
+            resultsDiv.innerHTML = `
+                <div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4 text-center">
+                    <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full mb-2"></div>
+                    <p class="text-blue-400 font-bold">🔍 Cercando canzoni...</p>
+                    <p class="text-sm text-gray-300 mt-1">Ricerca in corso su iTunes...</p>
+                </div>
+            `;
+
+            try {
+                // Use iTunes Search API (free, no API key required)
+                const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=10`);
+                const data = await response.json();
+                
+                if (data.results && data.results.length > 0) {
+                    const songs = data.results.map(song => ({
+                        id: song.trackId,
+                        title: song.trackName,
+                        artist: song.artistName,
+                        album: song.collectionName,
+                        preview: song.previewUrl,
+                        artwork: song.artworkUrl100,
+                        duration: Math.floor(song.trackTimeMillis / 1000),
+                        genre: song.primaryGenreName
+                    }));
+
+                    displaySearchResults(songs);
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="bg-orange-600/20 border border-orange-600 rounded-lg p-4 text-center">
+                            <p class="text-orange-400 font-bold">😔 Nessun risultato</p>
+                            <p class="text-sm text-gray-300 mt-2">Prova con termini di ricerca diversi o controlla l'ortografia.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="bg-red-600/20 border border-red-600 rounded-lg p-4 text-center">
+                        <p class="text-red-400 font-bold">❌ Errore di connessione</p>
+                        <p class="text-sm text-gray-300 mt-2">Impossibile connettersi al servizio di ricerca. Riprova più tardi.</p>
+                        <button onclick="searchSongs()" class="mt-2 bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition-colors">
+                            🔄 Riprova
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function displaySearchResults(songs) {
+            const resultsDiv = document.getElementById('searchResults');
+            
+            resultsDiv.innerHTML = `
+                <div class="mb-4">
+                    <p class="text-green-400 font-bold text-center">✅ Trovate ${songs.length} canzoni!</p>
+                    <p class="text-sm text-gray-400 text-center mt-1">Clicca "Aggiungi" per creare una versione karaoke</p>
+                </div>
+                ${songs.map(song => `
+                    <div class="bg-gray-700 rounded-lg p-4 mb-3 hover:bg-gray-600 transition-colors">
+                        <div class="flex items-center space-x-4">
+                            <img src="${song.artwork}" alt="${song.title}" class="w-16 h-16 rounded-lg object-cover">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-white">${song.title}</h4>
+                                <p class="text-gray-300">${song.artist}</p>
+                                <p class="text-sm text-gray-400">${song.album} • ${song.genre}</p>
+                                <p class="text-xs text-gray-500">Durata: ${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}</p>
+                            </div>
+                            <div class="flex flex-col space-y-2">
+                                ${song.preview ? `
+                                    <button onclick="playPreview('${song.preview}', this)" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm transition-colors">
+                                        🎵 Anteprima
+                                    </button>
+                                ` : ''}
+                                <button onclick="addSongToKaraoke('${song.id}', '${song.title.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', ${song.duration})" 
+                                        class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm transition-colors">
+                                    ➕ Aggiungi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        let currentPreviewAudio = null;
+
+        function playPreview(previewUrl, button) {
+            // Stop any currently playing preview
+            if (currentPreviewAudio) {
+                currentPreviewAudio.pause();
+                currentPreviewAudio = null;
+                // Reset all preview buttons
+                document.querySelectorAll('button').forEach(btn => {
+                    if (btn.textContent.includes('⏹️')) {
+                        btn.innerHTML = '🎵 Anteprima';
+                        btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                        btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    }
+                });
+            }
+
+            if (button.textContent.includes('🎵')) {
+                // Start playing
+                currentPreviewAudio = new Audio(previewUrl);
+                currentPreviewAudio.volume = 0.5;
+                
+                currentPreviewAudio.play().then(() => {
+                    button.innerHTML = '⏹️ Stop';
+                    button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    button.classList.add('bg-red-600', 'hover:bg-red-700');
+                }).catch(error => {
+                    console.error('Error playing preview:', error);
+                    alert('Impossibile riprodurre l\'anteprima');
+                });
+
+                currentPreviewAudio.onended = () => {
+                    button.innerHTML = '🎵 Anteprima';
+                    button.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    currentPreviewAudio = null;
+                };
+            }
+        }
+
+        function addSongToKaraoke(id, title, artist, duration) {
+            // Generate karaoke-style lyrics based on song duration
+            const lyrics = generateKaraokeLyrics(title, artist, duration);
+            
+            // Add to songs database
+            const songKey = `custom_${id}`;
+            songs[songKey] = {
+                title: title,
+                artist: artist,
+                duration: duration,
+                lyrics: lyrics,
+                isCustom: true
+            };
+
+            // Show success message
+            const resultsDiv = document.getElementById('searchResults');
+            const successMessage = document.createElement('div');
+            successMessage.className = 'bg-green-600/20 border border-green-600 rounded-lg p-4 text-center mb-4';
+            successMessage.innerHTML = `
+                <p class="text-green-400 font-bold">✅ Canzone aggiunta!</p>
+                <p class="text-sm text-gray-300 mt-2">"${title}" di ${artist} è ora disponibile per il karaoke!</p>
+                <button onclick="selectSong('${songKey}')" class="mt-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-bold transition-colors">
+                    🎤 Canta ora!
+                </button>
+            `;
+            
+            resultsDiv.insertBefore(successMessage, resultsDiv.firstChild);
+            
+            // Auto-scroll to success message
+            successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Remove success message after 5 seconds
+            setTimeout(() => {
+                if (successMessage.parentNode) {
+                    successMessage.remove();
+                }
+            }, 5000);
+        }
+
+        function generateKaraokeLyrics(title, artist, duration) {
+            // Create generic karaoke lyrics based on song info
+            const lyrics = [];
+            const lineCount = Math.max(6, Math.min(12, Math.floor(duration / 4)));
+            const lineDuration = Math.floor(duration / lineCount);
+            
+            // Common karaoke phrases in Italian and English
+            const phrases = [
+                `${title}, ${title}`,
+                `Cantando con ${artist}`,
+                "La la la la la",
+                "Oh oh oh oh",
+                "Yeah yeah yeah",
+                "Na na na na na",
+                `${title} è la mia canzone`,
+                "Tutti insieme ora",
+                "Canta con me",
+                "Alza le mani",
+                "Balla e canta",
+                `${title} forever`
+            ];
+            
+            for (let i = 0; i < lineCount; i++) {
+                lyrics.push({
+                    time: Math.floor(i * lineDuration) + 2,
+                    text: phrases[i % phrases.length],
+                    duration: Math.max(2, lineDuration - 1)
+                });
+            }
+            
+            return lyrics;
+        }
+
+        function quickSearch(artist) {
+            document.getElementById('searchInput').value = artist;
+            searchSongs();
+        }
+
+        // Game functions
+        function selectSong(songId) {
+            currentSongData = songs[songId];
+            if (!currentSongData) return;
+
+            document.getElementById('songSelection').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            
+            document.getElementById('currentSong').textContent = currentSongData.title;
+            document.getElementById('currentArtist').textContent = currentSongData.artist;
+            
+            setupLyrics();
+            resetGame();
+        }
+
+        function setupLyrics() {
+            const container = document.getElementById('lyricsContainer');
+            container.innerHTML = currentSongData.lyrics.map((line, index) => 
+                `<div class="lyrics-line" id="line-${index}" onclick="singLine(${index})">${line.text}</div>`
+            ).join('');
+            totalLines = currentSongData.lyrics.length;
+        }
+
+        function resetGame() {
+            currentTime = 0;
+            currentLineIndex = -1;
+            score = 0;
+            combo = 0;
+            maxCombo = 0;
+            correctLines = 0;
+            isPlaying = false;
+            gameStarted = false;
+            
+            if (gameTimer) clearInterval(gameTimer);
+            if (nextLineTimeout) clearTimeout(nextLineTimeout);
+            
+            updateScore();
+            updateTimer();
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('playBtn').innerHTML = '▶️ Inizia';
+            document.getElementById('nextLineTimer').textContent = '--';
+            
+            // Reset lyrics highlighting
+            document.querySelectorAll('.lyrics-line').forEach(line => {
+                line.classList.remove('active-line', 'sung-line', 'missed-line');
+            });
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                pauseGame();
+            } else {
+                if (!gameStarted) {
+                    startCountdown();
+                } else {
+                    resumeGame();
+                }
+            }
+        }
+
+        function startCountdown() {
+            document.getElementById('countdownScreen').classList.remove('hidden');
+            let count = 3;
+            
+            const countdownInterval = setInterval(() => {
+                document.getElementById('countdownNumber').textContent = count;
+                document.getElementById('countdownNumber').classList.add('pulse');
+                
+                setTimeout(() => {
+                    document.getElementById('countdownNumber').classList.remove('pulse');
+                }, 300);
+                
+                count--;
+                
+                if (count < 0) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdownScreen').classList.add('hidden');
+                    startGame();
+                }
+            }, 1000);
+        }
+
+        function startGame() {
+            isPlaying = true;
+            gameStarted = true;
+            document.getElementById('playBtn').innerHTML = '⏸️ Pausa';
+            
+            gameTimer = setInterval(() => {
+                currentTime++;
+                updateTimer();
+                updateProgress();
+                updateCurrentLine();
+                updateNextLineTimer();
+                
+                // End game after song duration
+                if (currentTime >= currentSongData.duration) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function resumeGame() {
+            isPlaying = true;
+            document.getElementById('playBtn').innerHTML = '⏸️ Pausa';
+            
+            gameTimer = setInterval(() => {
+                currentTime++;
+                updateTimer();
+                updateProgress();
+                updateCurrentLine();
+                updateNextLineTimer();
+                
+                if (currentTime >= currentSongData.duration) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function pauseGame() {
+            isPlaying = false;
+            clearInterval(gameTimer);
+            document.getElementById('playBtn').innerHTML = '▶️ Riprendi';
+        }
+
+        function stopGame() {
+            pauseGame();
+            resetGame();
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = currentTime % 60;
+            document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress() {
+            const progress = (currentTime / currentSongData.duration) * 100;
+            document.getElementById('progressBar').style.width = `${Math.min(progress, 100)}%`;
+        }
+
+        function updateCurrentLine() {
+            // Remove previous highlighting
+            document.querySelectorAll('.lyrics-line').forEach(line => {
+                line.classList.remove('active-line');
+            });
+
+            // Find current line
+            let newLineIndex = -1;
+            for (let i = 0; i < currentSongData.lyrics.length; i++) {
+                const line = currentSongData.lyrics[i];
+                if (currentTime >= line.time && currentTime < line.time + line.duration) {
+                    newLineIndex = i;
+                    document.getElementById(`line-${i}`).classList.add('active-line');
+                    break;
+                }
+            }
+
+            // Check if we missed a line
+            if (currentLineIndex !== -1 && newLineIndex !== currentLineIndex) {
+                const missedLine = document.getElementById(`line-${currentLineIndex}`);
+                if (missedLine && !missedLine.classList.contains('sung-line')) {
+                    missedLine.classList.add('missed-line');
+                    combo = 0;
+                    updateScore();
+                }
+            }
+
+            currentLineIndex = newLineIndex;
+        }
+
+        function updateNextLineTimer() {
+            if (currentLineIndex === -1) {
+                // Find next line
+                for (let i = 0; i < currentSongData.lyrics.length; i++) {
+                    if (currentTime < currentSongData.lyrics[i].time) {
+                        const timeToNext = currentSongData.lyrics[i].time - currentTime;
+                        document.getElementById('nextLineTimer').textContent = `${timeToNext}s`;
+                        return;
+                    }
+                }
+            }
+            document.getElementById('nextLineTimer').textContent = '--';
+        }
+
+        function singLine(lineIndex = null) {
+            if (!isPlaying) return;
+
+            const targetIndex = lineIndex !== null ? lineIndex : currentLineIndex;
+            
+            if (targetIndex === -1) {
+                // No active line
+                showFeedback('Aspetta la riga gialla!', 'warning');
+                return;
+            }
+
+            const currentLine = document.getElementById(`line-${targetIndex}`);
+            
+            if (currentLine && currentLine.classList.contains('active-line')) {
+                // Correct timing!
+                const basePoints = 100;
+                const comboBonus = combo * 20;
+                const totalPoints = basePoints + comboBonus;
+                
+                score += totalPoints;
+                combo++;
+                correctLines++;
+                maxCombo = Math.max(maxCombo, combo);
+                
+                // Visual feedback
+                currentLine.classList.remove('active-line');
+                currentLine.classList.add('sung-line');
+                
+                // Animate microphone button
+                const micBtn = document.getElementById('micBtn');
+                micBtn.classList.add('mic-button-active');
+                setTimeout(() => micBtn.classList.remove('mic-button-active'), 500);
+                
+                // Show points
+                showFeedback(`+${totalPoints}!`, 'success');
+                
+                if (combo > 1) {
+                    setTimeout(() => showFeedback(`Combo ${combo}x!`, 'combo'), 300);
+                }
+                
+            } else {
+                // Wrong timing or already sung
+                combo = 0;
+                showFeedback('-50', 'error');
+                score = Math.max(0, score - 50);
+            }
+            
+            updateScore();
+        }
+
+        function showFeedback(text, type) {
+            // Remove existing popups
+            document.querySelectorAll('.score-popup').forEach(popup => popup.remove());
+            
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = text;
+            
+            switch(type) {
+                case 'success':
+                    popup.style.color = '#22c55e';
+                    popup.classList.add('celebrate');
+                    break;
+                case 'error':
+                    popup.style.color = '#ef4444';
+                    popup.classList.add('shake');
+                    break;
+                case 'combo':
+                    popup.style.color = '#f59e0b';
+                    popup.classList.add('pulse');
+                    break;
+                case 'warning':
+                    popup.style.color = '#eab308';
+                    break;
+            }
+            
+            document.body.appendChild(popup);
+            
+            setTimeout(() => {
+                popup.style.opacity = '0';
+                popup.style.transform = 'translate(-50%, -70%) scale(0.8)';
+                setTimeout(() => popup.remove(), 300);
+            }, 1500);
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('combo').textContent = `${combo}x`;
+            
+            // Add celebration effect for high combos
+            if (combo > 0 && combo % 5 === 0) {
+                document.getElementById('combo').classList.add('celebrate');
+                setTimeout(() => {
+                    document.getElementById('combo').classList.remove('celebrate');
+                }, 600);
+            }
+        }
+
+        function endGame() {
+            pauseGame();
+            
+            // Mark any remaining active line as missed
+            if (currentLineIndex !== -1) {
+                const currentLine = document.getElementById(`line-${currentLineIndex}`);
+                if (currentLine && !currentLine.classList.contains('sung-line')) {
+                    currentLine.classList.add('missed-line');
+                }
+            }
+            
+            setTimeout(() => showResults(), 1000);
+        }
+
+        function showResults() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            
+            const accuracy = Math.round((correctLines / totalLines) * 100);
+            
+            document.getElementById('finalScore').textContent = score.toLocaleString();
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+            document.getElementById('maxCombo').textContent = `${maxCombo}x`;
+            
+            // Performance rating
+            let performance, performanceText, performanceDetails;
+            if (accuracy >= 90) {
+                performance = '🏆⭐⭐⭐';
+                performanceText = 'Fantastico! Sei una star!';
+                performanceDetails = 'Prestazione eccezionale! Hai cantato quasi tutte le righe al momento giusto.';
+            } else if (accuracy >= 70) {
+                performance = '🎉⭐⭐';
+                performanceText = 'Ottimo lavoro!';
+                performanceDetails = 'Brava performance! Con un po\' più di pratica sarai perfetto.';
+            } else if (accuracy >= 50) {
+                performance = '👏⭐';
+                performanceText = 'Buon tentativo!';
+                performanceDetails = 'Non male per un principiante! Continua a praticare.';
+            } else {
+                performance = '💪';
+                performanceText = 'Continua a praticare!';
+                performanceDetails = 'Il karaoke richiede pratica. Riprova e migliorerai sicuramente!';
+            }
+            
+            document.getElementById('performance').textContent = performance;
+            document.getElementById('performanceText').textContent = performanceText;
+            document.getElementById('performanceDetails').textContent = performanceDetails;
+        }
+
+        function backToSelection() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('songSelection').classList.remove('hidden');
+            
+            if (gameTimer) {
+                clearInterval(gameTimer);
+            }
+            if (nextLineTimeout) {
+                clearTimeout(nextLineTimeout);
+            }
+        }
+
+        function restartSong() {
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            resetGame();
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' && isPlaying) {
+                e.preventDefault();
+                singLine();
+            }
+        });
+
+        // Initialize search input
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchSongs();
+            }
+        });
+
+        // Add visual feedback for microphone interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            const micElements = document.querySelectorAll('.microphone');
+            micElements.forEach(mic => {
+                mic.addEventListener('mousedown', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                mic.addEventListener('mouseup', function() {
+                    this.style.transform = 'scale(1.1)';
+                });
+            });
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96f3252934796489',t:'MTc1NTIwMjc0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
