@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karaoke Game</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+h1{color:red} h2{color:blue}
+@keyframes bounce{0%,20%,50%,80%,100%{transform:translateY(0)}40%{transform:translateY(-10px)}60%{transform:translateY(-5px)}}
+@keyframes slideIn{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}90%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes glow{0%{box-shadow:0 0 5px #fbbf24}50%{box-shadow:0 0 20px #fbbf24,0 0 30px #fbbf24}100%{box-shadow:0 0 5px #fbbf24}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes celebrate{0%{transform:scale(1) rotate(0)}25%{transform:scale(1.2) rotate(-5deg)}50%{transform:scale(1.3) rotate(5deg)}75%{transform:scale(1.2) rotate(-3deg)}100%{transform:scale(1) rotate(0)}}
+.bounce{animation:bounce 2s infinite}.slide-in{animation:slideIn .5s ease-out}.pulse{animation:pulse .3s ease-in-out}.glow{animation:glow 1s ease-in-out infinite}.shake{animation:shake .5s ease-in-out}.celebrate{animation:celebrate .6s ease-in-out}
+.lyrics-line{transition:all .3s ease;padding:12px 20px;margin:6px 0;border-radius:12px;cursor:pointer;border:2px solid transparent}
+.lyrics-line:hover{background-color:rgba(75,85,99,.3)}
+.active-line{background:linear-gradient(135deg,rgba(251,191,36,.3),rgba(245,158,11,.3));color:#fbbf24;font-weight:bold;transform:scale(1.05);border:2px solid #fbbf24;box-shadow:0 0 15px rgba(251,191,36,.5)}
+.sung-line{background-color:rgba(34,197,94,.2);color:#22c55e;border:2px solid #22c55e}
+.missed-line{background-color:rgba(239,68,68,.2);color:#ef4444;border:2px solid #ef4444}
+.microphone{background:linear-gradient(135deg,#dc2626,#b91c1c);transition:all .3s ease}
+.microphone:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);transform:scale(1.1)}
+.stage{background:linear-gradient(135deg,#1e40af,#1d4ed8)}
+.progress-bar{transition:width .1s linear}
+.score-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;pointer-events:none;font-size:2rem;font-weight:bold;text-shadow:2px 2px 4px rgba(0,0,0,.8)}
+.mic-button-active{background:linear-gradient(135deg,#059669,#047857)!important;transform:scale(1.1);box-shadow:0 0 20px rgba(16,185,129,.6)}
+.countdown{font-size:4rem;font-weight:bold;text-shadow:2px 2px 4px rgba(0,0,0,.8)}
+</style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+
+<div class="stage p-6 text-center">
+<h1 class="text-4xl font-bold mb-2 bounce">🎤 karaoke 🎵</h1>
+<div class="flex justify-center items-center space-x-8">
+<div class="bg-white/20 rounded-lg p-3"><span class="text-sm">Punteggio</span><div id="score" class="text-2xl font-bold">0</div></div>
+<div class="bg-white/20 rounded-lg p-3"><span class="text-sm">Combo</span><div id="combo" class="text-2xl font-bold">0x</div></div>
+<div class="bg-white/20 rounded-lg p-3"><span class="text-sm">Tempo</span><div id="timer" class="text-2xl font-bold">0:00</div></div>
+</div></div>
+
+<div id="songSelection" class="max-w-4xl mx-auto p-6">
+<h2 class="text-2xl font-bold mb-6 text-center">Scegli la tua canzone</h2>
+<div class="bg-gray-800 rounded-lg p-6 mb-6">
+<h3 class="text-xl font-bold mb-4 text-center">🔍 Cerca nuove canzoni online</h3>
+<div class="flex gap-4 mb-4">
+<input type="text" id="searchInput" placeholder="Cerca artista e titolo (es: Ed Sheeran Perfect)" class="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none">
+<button onclick="searchSongs()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-bold">🔍 Cerca</button>
+</div>
+<div class="mb-4"><p class="text-sm text-gray-400 mb-2">💡 Suggerimenti:</p>
+<div class="flex flex-wrap gap-2">
+<button onclick="quickSearch('Queen')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs">Queen</button>
+<button onclick="quickSearch('Beatles')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs">Beatles</button>
+<button onclick="quickSearch('Laura Pausini')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs">Laura Pausini</button>
+<button onclick="quickSearch('Max Pezzali')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs">Max Pezzali</button>
+<button onclick="quickSearch('Tiziano Ferro')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-xs">Tiziano Ferro</button>
+</div></div>
+<div id="searchResults" class="space-y-2"></div>
+</div>
+
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+<script>
+const presetCards = [
+['bohemian','🎸','Bohemian Rhapsody','Queen','⭐⭐⭐⭐⭐','Alta'],
+['imagine','🎹','Imagine','John Lennon','⭐⭐⭐','Media'],
+['volare','🇮🇹','Volare','Domenico Modugno','⭐⭐⭐⭐','Media'],
+['azzurro','☀️','Azzurro','Adriano Celentano','⭐⭐','Facile'],
+['yesterday','🎵','Yesterday','The Beatles','⭐⭐⭐','Media'],
+['caruso','🌊','Caruso','Lucio Dalla','⭐⭐⭐⭐','Alta'],
+['lavidaloca','💃','La Vida Loca','Ricky Martin','⭐⭐⭐','Media'],
+['mambo','🕺','Mambo No. 5','Lou Bega','⭐⭐','Facile']
+];
+document.write(presetCards.map(s=>`<div class="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 cursor-pointer" onclick="selectSong('${s[0]}')"><div class="flex items-center space-x-4"><div class="text-4xl">${s[1]}</div><div><h3 class="font-bold">${s[2]}</h3><p class="text-gray-400">${s[3]}</p><div class="flex items-center space-x-2 mt-1"><span class="text-yellow-400">${s[4]}</span><span class="text-sm text-gray-500">Difficoltà: ${s[5]}</span></div></div></div></div>`).join(''));
+</script>
+</div>
+<div class="mt-6 bg-gray-800 rounded-lg p-5 text-center"><h3 class="text-xl font-bold mb-2">🎶 Più canzoni</h3><p class="text-gray-400 text-sm">Usa la ricerca online per aggiungere canzoni.</p></div>
+</div>
+
+<div id="countdownScreen" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+<div class="text-center"><div id="countdownNumber" class="countdown text-yellow-400 mb-4">3</div><div class="text-xl">Preparati a cantare!</div></div></div>
+
+<div id="gameScreen" class="hidden max-w-4xl mx-auto p-6">
+<div class="bg-gray-800 rounded-lg p-4 mb-6 text-center">
+<h2 id="currentSong" class="text-2xl font-bold mb-2"></h2><p id="currentArtist" class="text-gray-400 mb-4"></p>
+<div class="bg-gray-700 rounded-full h-3 mb-4"><div id="progressBar" class="progress-bar bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full" style="width:0%"></div></div>
+<audio id="karaokeAudio" preload="auto" class="hidden"></audio>
+<div class="bg-gray-700/50 rounded-lg p-4 mb-4">
+<div class="flex items-center justify-center gap-4 flex-wrap">
+<label class="text-sm text-gray-300">🎚️ Volume</label><input id="volumeControl" type="range" min="0" max="1" step=".01" value=".7" class="w-40">
+<span id="audioStatus" class="text-sm text-gray-400">Audio pronto</span>
+</div></div>
+<div class="flex justify-center space-x-4 flex-wrap gap-2">
+<button id="playBtn" onclick="togglePlay()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-bold">▶️ Inizia</button>
+<button onclick="pauseGame()" class="bg-yellow-600 hover:bg-yellow-700 px-6 py-2 rounded-lg font-bold">⏸️ Pausa</button>
+<button onclick="stopGame()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-bold">⏹️ Stop</button>
+<button onclick="backToSelection()" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg font-bold">🔙 Indietro</button>
+</div></div>
+
+<div class="bg-gray-800 rounded-lg p-6 mb-6">
+<h3 class="text-xl font-bold mb-4 text-center">🎵 Testo</h3>
+<div class="text-center mb-4"><div class="text-sm text-gray-400">💡 Clicca il microfono quando la riga è evidenziata in giallo!</div></div>
+<div id="lyricsContainer" class="text-center space-y-2 max-h-96 overflow-y-auto"></div>
+</div>
+
+<div class="bg-gray-800 rounded-lg p-6">
+<h3 class="text-xl font-bold mb-4 text-center">🎤 Canta ora!</h3>
+<div class="text-center">
+<div class="microphone w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl glow cursor-pointer" onclick="singLine()">🎤</div>
+<p class="text-gray-400 mb-4">Clicca il microfono quando canti la riga evidenziata!</p>
+<button id="micBtn" onclick="singLine()" class="bg-purple-600 hover:bg-purple-700 px-8 py-3 rounded-lg font-bold text-xl">🎤 CANTA!</button>
+<div class="mt-4"><div class="text-sm text-gray-400">Prossima riga tra: <span id="nextLineTimer" class="text-yellow-400 font-bold">--</span></div></div>
+</div></div>
+</div>
+
+<div id="resultsScreen" class="hidden max-w-4xl mx-auto p-6 text-center">
+<div class="bg-gray-800 rounded-lg p-8"><h2 class="text-3xl font-bold mb-6">🏆 Risultati Finali</h2>
+<div class="grid md:grid-cols-3 gap-6 mb-8">
+<div class="bg-yellow-600 rounded-lg p-4"><div class="text-3xl font-bold" id="finalScore">0</div><div class="text-sm">Punteggio Finale</div></div>
+<div class="bg-blue-600 rounded-lg p-4"><div class="text-3xl font-bold" id="accuracy">0%</div><div class="text-sm">Precisione</div></div>
+<div class="bg-green-600 rounded-lg p-4"><div class="text-3xl font-bold" id="maxCombo">0x</div><div class="text-sm">Combo Massima</div></div>
+</div>
+<div class="mb-6"><div id="performance" class="text-6xl mb-4">⭐</div><div id="performanceText" class="text-2xl font-bold mb-2">Ottimo lavoro!</div><div id="performanceDetails" class="text-gray-400"></div></div>
+<div class="space-x-4"><button onclick="backToSelection()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold">🎵 Nuova Canzone</button><button onclick="restartSong()" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold">🔄 Riprova</button></div>
+</div></div>
+
+<script>
+let currentSongData=null,gameTimer=null,currentTime=0,currentLineIndex=-1,score=0,combo=0,maxCombo=0,totalLines=0,correctLines=0,isPlaying=false,gameStarted=false,nextLineTimeout=null,karaokeAudio=null,customSongs=[];
+
+const songs={
+bohemian:{title:"Bohemian Rhapsody",artist:"Queen",duration:60,lyrics:[
+{time:2,text:"Is this the real life?",duration:3},{time:6,text:"Is this just fantasy?",duration:3},{time:10,text:"Caught in a landslide",duration:3},{time:14,text:"No escape from reality",duration:3},{time:18,text:"Open your eyes",duration:2},{time:21,text:"Look up to the skies and see",duration:3},{time:25,text:"I'm just a poor boy",duration:3},{time:29,text:"I need no sympathy",duration:3},{time:33,text:"Because I'm easy come, easy go",duration:3},{time:37,text:"Little high, little low",duration:3},{time:41,text:"Any way the wind blows",duration:3},{time:45,text:"Doesn't really matter to me",duration:4},{time:50,text:"To me...",duration:3},{time:54,text:"Mama, just killed a man",duration:4}]},
+imagine:{title:"Imagine",artist:"John Lennon",duration:45,lyrics:[
+{time:2,text:"Imagine there's no heaven",duration:4},{time:7,text:"It's easy if you try",duration:3},{time:11,text:"No hell below us",duration:3},{time:15,text:"Above us only sky",duration:3},{time:19,text:"Imagine all the people",duration:4},{time:24,text:"Living for today",duration:3},{time:28,text:"Imagine there's no countries",duration:4},{time:33,text:"It isn't hard to do",duration:3},{time:37,text:"Nothing to kill or die for",duration:4},{time:42,text:"And no religion too",duration:3}]},
+volare:{title:"Volare",artist:"Domenico Modugno",duration:50,lyrics:[
+{time:2,text:"Volare, oh oh",duration:3},{time:6,text:"Cantare, oh oh oh oh",duration:3},{time:10,text:"Nel blu dipinto di blu",duration:4},{time:15,text:"Felice di stare lassù",duration:3},{time:19,text:"E volavo, volavo felice",duration:4},{time:24,text:"Più in alto del sole",duration:3},{time:28,text:"Ed ancora più su",duration:3},{time:32,text:"Mentre il mondo pian piano",duration:4},{time:37,text:"Spariva lontano laggiù",duration:4},{time:42,text:"Una musica dolce suonava",duration:4},{time:47,text:"Soltanto per me",duration:3}]},
+azzurro:{title:"Azzurro",artist:"Adriano Celentano",duration:40,lyrics:[
+{time:2,text:"Azzurro",duration:2},{time:5,text:"Il pomeriggio è troppo azzurro",duration:4},{time:10,text:"E lungo per me",duration:3},{time:14,text:"Mi accorgo",duration:2},{time:17,text:"Di non avere più risorse",duration:3},{time:21,text:"Senza di te",duration:3},{time:25,text:"E allora",duration:2},{time:28,text:"Io quasi quasi prendo il treno",duration:4},{time:33,text:"E vengo, vengo da te",duration:3},{time:37,text:"Il treno dei desideri",duration:3}]},
+yesterday:{title:"Yesterday",artist:"The Beatles",duration:35,lyrics:[
+{time:2,text:"Yesterday",duration:2},{time:5,text:"All my troubles seemed so far away",duration:4},{time:10,text:"Now it looks as though they're here to stay",duration:4},{time:15,text:"Oh, I believe in yesterday",duration:4},{time:20,text:"Suddenly",duration:2},{time:23,text:"I'm not half the man I used to be",duration:4},{time:28,text:"There's a shadow hanging over me",duration:4},{time:33,text:"Oh, yesterday came suddenly",duration:3}]},
+caruso:{title:"Caruso",artist:"Lucio Dalla",duration:55,lyrics:[
+{time:3,text:"Qui dove il mare luccica",duration:4},{time:8,text:"E tira forte il vento",duration:3},{time:12,text:"Su una vecchia terrazza",duration:3},{time:16,text:"Davanti al golfo di Surriento",duration:4},{time:21,text:"Un uomo abbraccia una ragazza",duration:4},{time:26,text:"Dopo che aveva pianto",duration:3},{time:30,text:"Poi si schiarisce la voce",duration:3},{time:34,text:"E ricomincia il canto",duration:3},{time:38,text:"Te voglio bene assai",duration:4},{time:43,text:"Ma tanto tanto bene sai",duration:4},{time:48,text:"È una catena ormai",duration:3},{time:52,text:"Che scioglie il sangue dint'e vene sai",duration:4}]},
+lavidaloca:{title:"La Vida Loca",artist:"Ricky Martin",duration:42,lyrics:[
+{time:2,text:"She's into superstitions",duration:3},{time:6,text:"Black cats and voodoo dolls",duration:3},{time:10,text:"I feel a premonition",duration:3},{time:14,text:"That girl's gonna make me fall",duration:3},{time:18,text:"She's into new sensations",duration:3},{time:22,text:"New kicks in the candlelight",duration:3},{time:26,text:"She's got a new addiction",duration:3},{time:30,text:"For every day and night",duration:3},{time:34,text:"She'll make you take your clothes off",duration:3},{time:38,text:"And go dancing in the rain",duration:4}]},
+mambo:{title:"Mambo No. 5",artist:"Lou Bega",duration:38,lyrics:[
+{time:2,text:"One, two, three, four, five",duration:3},{time:6,text:"Everybody in the car, so come on",duration:3},{time:10,text:"Let's ride to the liquor store",duration:3},{time:14,text:"Around the corner",duration:2},{time:17,text:"The boys say they want some gin and juice",duration:4},{time:22,text:"But I really don't wanna",duration:3},{time:26,text:"Beer bust like I had last week",duration:3},{time:30,text:"I must stay deep",duration:2},{time:33,text:"Because talk is cheap",duration:3},{time:37,text:"I like Angela, Pamela, Sandra and Rita",duration:4}]}
+};
+
+function selectSong(songId){
+ currentSongData=songs[songId]; if(!currentSongData)return;
+ document.getElementById('songSelection').classList.add('hidden');
+ document.getElementById('resultsScreen').classList.add('hidden');
+ document.getElementById('gameScreen').classList.remove('hidden');
+ document.getElementById('currentSong').textContent=currentSongData.title;
+ document.getElementById('currentArtist').textContent=currentSongData.artist;
+ setupLyrics(); setupAudio(); resetGame();
+}
+
+function setupLyrics(){
+ const c=document.getElementById('lyricsContainer');
+ c.innerHTML=currentSongData.lyrics.map((l,i)=>`<div class="lyrics-line" id="line-${i}" onclick="singLine(${i})">${l.text}</div>`).join('');
+ totalLines=currentSongData.lyrics.length;
+}
+
+function setupAudio(){
+ karaokeAudio=document.getElementById('karaokeAudio');
+ karaokeAudio.pause(); karaokeAudio.currentTime=0;
+ karaokeAudio.removeAttribute('src');
+ karaokeAudio.load();
+ const status=document.getElementById('audioStatus');
+ const volume=document.getElementById('volumeControl');
+ karaokeAudio.volume=parseFloat(volume.value);
+ if(currentSongData.audioUrl){
+   karaokeAudio.src=currentSongData.audioUrl;
+   karaokeAudio.load();
+   status.textContent='🎵 Audio pronto';
+   karaokeAudio.onloadedmetadata=()=>{status.textContent='🎵 Audio pronto'};
+   karaokeAudio.onerror=()=>{status.textContent='⚠️ Audio non disponibile'};
+   karaokeAudio.onended=()=>endGame();
+ }else status.textContent='🎵 Nessuna base audio disponibile';
+}
+
+function resetGame(){
+ if(gameTimer)clearInterval(gameTimer);
+ if(nextLineTimeout)clearTimeout(nextLineTimeout);
+ if(karaokeAudio){karaokeAudio.pause();karaokeAudio.currentTime=0}
+ currentTime=0;currentLineIndex=-1;score=0;combo=0;maxCombo=0;correctLines=0;isPlaying=false;gameStarted=false;
+ updateScore();updateTimer();
+ document.getElementById('progressBar').style.width='0%';
+ document.getElementById('playBtn').innerHTML='▶️ Inizia';
+ document.getElementById('nextLineTimer').textContent='--';
+ document.querySelectorAll('.lyrics-line').forEach(l=>l.classList.remove('active-line','sung-line','missed-line'));
+}
+
+function togglePlay(){
+ if(isPlaying){pauseGame();return}
+ if(!gameStarted){startCountdown()}else resumeGame();
+}
+
+function startCountdown(){
+ if(isPlaying)return;
+ const screen=document.getElementById('countdownScreen'),num=document.getElementById('countdownNumber');
+ screen.classList.remove('hidden');
+ let count=3; num.textContent=count;
+ const interval=setInterval(()=>{
+   count--;
+   if(count>0){num.textContent=count}
+   else{
+     clearInterval(interval);screen.classList.add('hidden');startGame();
+   }
+ },1000);
+}
+
+function startGame(){
+ if(!currentSongData)return;
+ isPlaying=true;gameStarted=true;currentTime=0;currentLineIndex=-1;
+ document.getElementById('playBtn').innerHTML='⏸️ Pausa';
+ document.getElementById('audioStatus').textContent='▶️ In riproduzione';
+ updateTimer();updateProgress();updateCurrentLine();updateNextLineTimer();
+
+ // Il browser consente play() perché questa funzione deriva dal click sul pulsante.
+ if(karaokeAudio && currentSongData.audioUrl){
+   karaokeAudio.currentTime=0;
+   const p=karaokeAudio.play();
+   if(p&&p.catch)p.catch(err=>{
+     console.error('Errore riproduzione audio:',err);
+     document.getElementById('audioStatus').textContent='⚠️ Premi di nuovo Inizia per avviare l’audio';
+   });
+ }
+
+ clearInterval(gameTimer);
+ gameTimer=setInterval(()=>{
+   if(!isPlaying)return;
+   currentTime++;
+   updateTimer();updateProgress();updateCurrentLine();updateNextLineTimer();
+   if(currentTime>=currentSongData.duration)endGame();
+ },1000);
+}
+
+function resumeGame(){
+ if(!currentSongData)return;
+ isPlaying=true;document.getElementById('playBtn').innerHTML='⏸️ Pausa';
+ if(karaokeAudio&&currentSongData.audioUrl){
+   karaokeAudio.currentTime=Math.max(0,currentTime);
+   const p=karaokeAudio.play(); if(p&&p.catch)p.catch(console.error);
+   document.getElementById('audioStatus').textContent='▶️ In riproduzione';
+ }
+ clearInterval(gameTimer);
+ gameTimer=setInterval(()=>{
+   if(!isPlaying)return;
+   currentTime++;updateTimer();updateProgress();updateCurrentLine();updateNextLineTimer();
+   if(currentTime>=currentSongData.duration)endGame();
+ },1000);
+}
+
+function pauseGame(){
+ isPlaying=false;clearInterval(gameTimer);
+ if(karaokeAudio)karaokeAudio.pause();
+ document.getElementById('playBtn').innerHTML=gameStarted?'▶️ Riprendi':'▶️ Inizia';
+ document.getElementById('audioStatus').textContent='⏸️ In pausa';
+}
+
+function stopGame(){
+ isPlaying=false;clearInterval(gameTimer);
+ if(karaokeAudio){karaokeAudio.pause();karaokeAudio.currentTime=0}
+ resetGame();
+}
+
+function updateTimer(){
+ const m=Math.floor(currentTime/60),s=currentTime%60;
+ document.getElementById('timer').textContent=`${m}:${String(s).padStart(2,'0')}`;
+}
+function updateProgress(){
+ if(!currentSongData)return;
+ document.getElementById('progressBar').style.width=`${Math.min((currentTime/currentSongData.duration)*100,100)}%`;
+}
+function updateCurrentLine(){
+ document.querySelectorAll('.lyrics-line').forEach(l=>l.classList.remove('active-line'));
+ let idx=-1;
+ for(let i=0;i<currentSongData.lyrics.length;i++){
+   const l=currentSongData.lyrics[i];
+   if(currentTime>=l.time&&currentTime<l.time+l.duration){idx=i;break}
+ }
+ if(idx>=0){
+   const el=document.getElementById(`line-${idx}`);
+   if(el){el.classList.add('active-line','slide-in');el.scrollIntoView({behavior:'smooth',block:'center'})}
+ }
+ if(currentLineIndex!==-1&&idx!==currentLineIndex){
+   const old=document.getElementById(`line-${currentLineIndex}`);
+   if(old&&!old.classList.contains('sung-line')){old.classList.add('missed-line');combo=0;updateScore()}
+ }
+ currentLineIndex=idx;
+}
+function updateNextLineTimer(){
+ if(!currentSongData)return;
+ for(const l of currentSongData.lyrics){
+   if(currentTime<l.time){document.getElementById('nextLineTimer').textContent=`${l.time-currentTime}s`;return}
+ }
+ document.getElementById('nextLineTimer').textContent='--';
+}
+
+function singLine(lineIndex=null){
+ if(!isPlaying)return;
+ const target=lineIndex!==null?lineIndex:currentLineIndex;
+ if(target<0){showFeedback('Aspetta la riga gialla!','warning');return}
+ const el=document.getElementById(`line-${target}`);
+ if(el&&el.classList.contains('active-line')){
+   const points=100+combo*20;
+   score+=points;combo++;correctLines++;maxCombo=Math.max(maxCombo,combo);
+   el.classList.remove('active-line');el.classList.add('sung-line');
+   const btn=document.getElementById('micBtn');btn.classList.add('mic-button-active');setTimeout(()=>btn.classList.remove('mic-button-active'),500);
+   showFeedback(`+${points}!`,'success');
+   if(combo>1)setTimeout(()=>showFeedback(`Combo ${combo}x!`,'combo'),300);
+ }else{combo=0;score=Math.max(0,score-50);showFeedback('-50','error')}
+ updateScore();
+}
+function showFeedback(text,type){
+ document.querySelectorAll('.score-popup').forEach(p=>p.remove());
+ const p=document.createElement('div');p.className='score-popup';p.textContent=text;
+ if(type==='success'){p.style.color='#22c55e';p.classList.add('celebrate')}
+ if(type==='error'){p.style.color='#ef4444';p.classList.add('shake')}
+ if(type==='combo'){p.style.color='#f59e0b';p.classList.add('pulse')}
+ if(type==='warning')p.style.color='#eab308';
+ document.body.appendChild(p);
+ setTimeout(()=>{p.style.opacity='0';setTimeout(()=>p.remove(),300)},1200);
+}
+function updateScore(){
+ document.getElementById('score').textContent=score;
+ document.getElementById('combo').textContent=`${combo}x`;
+}
+function endGame(){
+ if(!isPlaying&&gameStarted===false)return;
+ isPlaying=false;clearInterval(gameTimer);
+ if(karaokeAudio)karaokeAudio.pause();
+ setTimeout(showResults,500);
+}
+function showResults(){
+ document.getElementById('gameScreen').classList.add('hidden');document.getElementById('resultsScreen').classList.remove('hidden');
+ const accuracy=totalLines?Math.round(correctLines/totalLines*100):0;
+ document.getElementById('finalScore').textContent=score.toLocaleString();
+ document.getElementById('accuracy').textContent=`${accuracy}%`;
+ document.getElementById('maxCombo').textContent=`${maxCombo}x`;
+ let p,t,d;
+ if(accuracy>=90){p='🏆⭐⭐⭐';t='Fantastico! Sei una star!';d='Prestazione eccezionale!'}
+ else if(accuracy>=70){p='🎉⭐⭐';t='Ottimo lavoro!';d='Brava performance!'}
+ else if(accuracy>=50){p='👏⭐';t='Buon tentativo!';d='Non male! Continua a praticare.'}
+ else{p='💪';t='Continua a praticare!';d='Riprova e migliorerai sicuramente!'}
+ document.getElementById('performance').textContent=p;document.getElementById('performanceText').textContent=t;document.getElementById('performanceDetails').textContent=d;
+}
+function backToSelection(){
+ if(gameTimer)clearInterval(gameTimer);
+ if(karaokeAudio){karaokeAudio.pause();karaokeAudio.currentTime=0}
+ document.getElementById('gameScreen').classList.add('hidden');document.getElementById('resultsScreen').classList.add('hidden');document.getElementById('songSelection').classList.remove('hidden');
+}
+function restartSong(){
+ document.getElementById('resultsScreen').classList.add('hidden');document.getElementById('gameScreen').classList.remove('hidden');resetGame();
+}
+document.getElementById('volumeControl').addEventListener('input',e=>{if(karaokeAudio)karaokeAudio.volume=parseFloat(e.target.value)});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&isPlaying){e.preventDefault();singLine()}});
+
+// --- Ricerca online / anteprima / canzoni personalizzate ---
+let currentPreviewAudio=null;
+async function searchSongs(){
+ const q=document.getElementById('searchInput').value.trim(),r=document.getElementById('searchResults');
+ if(q.length<3){r.innerHTML='<p class="text-gray-400 text-center">Inserisci almeno 3 caratteri</p>';return}
+ r.innerHTML='<div class="bg-blue-600/20 border border-blue-600 rounded-lg p-4 text-center">🔍 Cercando canzoni...</div>';
+ try{
+  const response=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=10`);
+  const data=await response.json();
+  if(!data.results?.length){r.innerHTML='<p class="text-orange-400 text-center">😔 Nessun risultato</p>';return}
+  displaySearchResults(data.results.map(s=>({id:s.trackId,title:s.trackName,artist:s.artistName,album:s.collectionName,preview:s.previewUrl,artwork:s.artworkUrl100,duration:Math.floor(s.trackTimeMillis/1000),genre:s.primaryGenreName})));
+ }catch(e){console.error(e);r.innerHTML='<p class="text-red-400 text-center">❌ Errore di connessione</p>'}
+}
+function displaySearchResults(list){
+ const r=document.getElementById('searchResults');
+ r.innerHTML=`<p class="text-green-400 font-bold text-center mb-4">✅ Trovate ${list.length} canzoni!</p>`+
+ list.map(s=>`<div class="bg-gray-700 rounded-lg p-4 mb-3"><div class="flex items-center space-x-4">
+ <img src="${s.artwork||''}" class="w-16 h-16 rounded-lg object-cover"><div class="flex-1"><h4 class="font-bold">${escapeHtml(s.title)}</h4><p>${escapeHtml(s.artist)}</p><p class="text-sm text-gray-400">${escapeHtml(s.album||'')}</p></div>
+ <div class="flex flex-col gap-2"><button onclick="playPreview('${escapeAttr(s.preview||'')}',this)" class="bg-blue-600 px-3 py-1 rounded text-sm">🎵 Anteprima</button>
+ <button onclick="addSongToKaraoke(${Number(s.id)},'${escapeAttr(s.title)}','${escapeAttr(s.artist)}',${Number(s.duration)},'${escapeAttr(s.preview||'')}')" class="bg-green-600 px-3 py-1 rounded text-sm">➕ Aggiungi</button></div>
+ </div></div>`).join('');
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function escapeAttr(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function playPreview(url,btn){
+ if(!url)return;
+ if(currentPreviewAudio){currentPreviewAudio.pause();currentPreviewAudio=null}
+ currentPreviewAudio=new Audio(url);currentPreviewAudio.volume=.5;
+ currentPreviewAudio.play().catch(()=>alert('Impossibile riprodurre l’anteprima'));
+ btn.textContent='⏹️ Stop';
+ currentPreviewAudio.onended=()=>{btn.textContent='🎵 Anteprima';currentPreviewAudio=null};
+}
+function generateKaraokeLyrics(title,artist,duration){
+ const phrases=[`${title}, ${title}`,`Cantando con ${artist}`,'La la la la la','Oh oh oh oh','Yeah yeah yeah','Na na na na na',`${title} è la mia canzone`,'Tutti insieme ora','Canta con me','Alza le mani','Balla e canta',`${title} forever`];
+ const n=Math.max(6,Math.min(12,Math.floor(duration/4))),step=Math.max(1,Math.floor(duration/n));
+ return Array.from({length:n},(_,i)=>({time:Math.min(duration-1,i*step+2),text:phrases[i%phrases.length],duration:Math.max(2,step-1)}));
+}
+function addSongToKaraoke(id,title,artist,duration,previewUrl=''){
+ const key=`custom_${id}`;
+ songs[key]={title,artist,duration,lyrics:generateKaraokeLyrics(title,artist,duration),audioUrl:previewUrl,isCustom:true,id};
+ const saved=JSON.parse(localStorage.getItem('karaokeCustomSongs')||'[]').filter(s=>s.id!==id);saved.push(songs[key]);
+ localStorage.setItem('karaokeCustomSongs',JSON.stringify(saved));
+ const r=document.getElementById('searchResults');
+ r.insertAdjacentHTML('afterbegin',`<div class="bg-green-600/20 border border-green-600 rounded-lg p-4 text-center mb-4"><p class="text-green-400 font-bold">✅ Canzone aggiunta!</p><button onclick="selectSong('${key}')" class="mt-2 bg-green-600 px-4 py-2 rounded font-bold">🎤 Canta ora!</button></div>`);
+}
+function quickSearch(a){document.getElementById('searchInput').value=a;searchSongs()}
+try{JSON.parse(localStorage.getItem('karaokeCustomSongs')||'[]').forEach(s=>songs[`custom_${s.id}`]=s)}catch(e){console.warn(e)}
+document.getElementById('searchInput').addEventListener('keypress',e=>{if(e.key==='Enter')searchSongs()});
+</script>
+</body>
+</html>
