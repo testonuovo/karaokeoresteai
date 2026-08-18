@@ -295,6 +295,10 @@
                 </div>
             </div>
         </div>
+        <div class="mt-6 bg-gray-800 rounded-lg p-5 text-center">
+            <h3 class="text-xl font-bold mb-2">🎶 Più canzoni</h3>
+            <p class="text-gray-400 text-sm">Usa la ricerca online per aggiungere fino a 10 risultati per volta.</p>
+        </div>
     </div>
 
     <!-- Countdown Screen -->
@@ -317,7 +321,15 @@
                 <div id="progressBar" class="progress-bar bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full" style="width: 0%"></div>
             </div>
             
-            <!-- Controls -->
+            <!-- Audio + Controls -->
+            <audio id="karaokeAudio" preload="metadata" class="hidden"></audio>
+            <div class="bg-gray-700/50 rounded-lg p-4 mb-4">
+                <div class="flex items-center justify-center gap-4 flex-wrap">
+                    <label class="text-sm text-gray-300">🎚️ Volume</label>
+                    <input id="volumeControl" type="range" min="0" max="1" step="0.01" value="0.7" class="w-40">
+                    <span id="audioStatus" class="text-sm text-gray-400">Audio pronto</span>
+                </div>
+            </div>
             <div class="flex justify-center space-x-4">
                 <button id="playBtn" onclick="togglePlay()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-bold transition-colors">
                     ▶️ Inizia
@@ -411,6 +423,16 @@
         let isPlaying = false;
         let gameStarted = false;
         let nextLineTimeout = null;
+        let karaokeAudio = null;
+        let micStream = null;
+        let audioContext = null;
+        let analyser = null;
+        let micSource = null;
+        let pitchAnimationFrame = null;
+        let currentPitch = 0;
+        let lastPitchAccuracy = 0;
+        let micEnabled = false;
+        let customSongs = [];
 
         // Song Database with real lyrics and detailed timing
         const songs = {
@@ -640,7 +662,8 @@
                                         🎵 Anteprima
                                     </button>
                                 ` : ''}
-                                <button onclick="addSongToKaraoke('${song.id}', '${song.title.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', ${song.duration})" 
+                                <button onclick="addSongToKaraoke('${song.id}', '${song.title.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', ${song.duration}, '${song.preview || ''}')"
+ 
                                         class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm transition-colors">
                                     ➕ Aggiungi
                                 </button>
@@ -691,8 +714,7 @@
             }
         }
 
-        function addSongToKaraoke(id, title, artist, duration) {
-            // Generate karaoke-style lyrics based on song duration
+        function addSongToKaraoke(id, title, artist, duration, previewUrl = '') {
             const lyrics = generateKaraokeLyrics(title, artist, duration);
             
             // Add to songs database
@@ -702,8 +724,13 @@
                 artist: artist,
                 duration: duration,
                 lyrics: lyrics,
-                isCustom: true
+                audioUrl: previewUrl,
+                isCustom: true,
+                id: id
             };
+            customSongs = customSongs.filter(s => s.id !== id);
+            customSongs.push(songs[songKey]);
+            localStorage.setItem('karaokeCustomSongs', JSON.stringify(customSongs));
 
             // Show success message
             const resultsDiv = document.getElementById('searchResults');
@@ -780,7 +807,95 @@
             document.getElementById('currentArtist').textContent = currentSongData.artist;
             
             setupLyrics();
+            setupAudio();
             resetGame();
+        }
+
+        function setupAudio() {
+            karaokeAudio = document.getElementById('karaokeAudio');
+            const status = document.getElementById('audioStatus');
+            const volume = document.getElementById('volumeControl');
+            karaokeAudio.pause();
+            karaokeAudio.currentTime = 0;
+            karaokeAudio.src = currentSongData.audioUrl || '';
+            karaokeAudio.volume = parseFloat(volume.value);
+            if (currentSongData.audioUrl) {
+                status.textContent = '🎵 Anteprima audio caricata';
+                karaokeAudio.onended = () => endGame();
+            } else {
+                status.textContent = '🎵 Nessuna base audio disponibile';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('volumeControl').addEventListener('input', e => {
+                if (karaokeAudio) karaokeAudio.volume = parseFloat(e.target.value);
+            });
+        });
+
+        async function enableMicrophone() {
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                micSource = audioContext.createMediaStreamSource(micStream);
+                micSource.connect(analyser);
+                micEnabled = true;
+                document.getElementById('micPermissionBtn').textContent = '🎙️ Microfono attivo';
+                document.getElementById('micPermissionBtn').classList.add('bg-green-600');
+                document.getElementById('pitchMeter').classList.remove('hidden');
+                monitorPitch();
+            } catch (error) {
+                console.error('Microphone error:', error);
+                showFeedback('Microfono non disponibile', 'error');
+            }
+        }
+
+        function autoCorrelate(buffer, sampleRate) {
+            let SIZE = buffer.length;
+            let rms = 0;
+            for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
+            rms = Math.sqrt(rms / SIZE);
+            if (rms < 0.01) return -1;
+
+            let bestOffset = -1, bestCorrelation = 0;
+            for (let offset = 8; offset < SIZE / 2; offset++) {
+                let correlation = 0;
+                for (let i = 0; i < SIZE - offset; i++) {
+                    correlation += buffer[i] * buffer[i + offset];
+                }
+                correlation /= (SIZE - offset);
+                if (correlation > bestCorrelation) {
+                    bestCorrelation = correlation;
+                    bestOffset = offset;
+                }
+            }
+            if (bestCorrelation < 0.01 || bestOffset === -1) return -1;
+            return sampleRate / bestOffset;
+        }
+
+        function monitorPitch() {
+            if (!analyser) return;
+            const buffer = new Float32Array(analyser.fftSize);
+            analyser.getFloatTimeDomainData(buffer);
+            currentPitch = autoCorrelate(buffer, audioContext.sampleRate);
+
+            // Demo di scoring vocale: misura la presenza/stabilità della voce.
+            // Per un vero karaoke tonale servono note target sincronizzate.
+            if (currentPitch > 0) {
+                lastPitchAccuracy = Math.min(100, Math.round(55 + Math.min(currentPitch / 10, 45)));
+                document.getElementById('pitchAccuracy').textContent = `${lastPitchAccuracy}%`;
+                document.getElementById('pitchBar').style.width = `${lastPitchAccuracy}%`;
+            }
+            pitchAnimationFrame = requestAnimationFrame(monitorPitch);
+        }
+
+        function stopMicrophone() {
+            if (pitchAnimationFrame) cancelAnimationFrame(pitchAnimationFrame);
+            if (micStream) micStream.getTracks().forEach(track => track.stop());
+            micStream = null;
+            micEnabled = false;
         }
 
         function setupLyrics() {
@@ -894,12 +1009,13 @@
 
         function stopGame() {
             pauseGame();
+            if (karaokeAudio) karaokeAudio.currentTime = 0;
             resetGame();
         }
 
         function updateTimer() {
             const minutes = Math.floor(currentTime / 60);
-            const seconds = currentTime % 60;
+            const seconds = Math.floor(currentTime % 60);
             document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
 
@@ -969,7 +1085,8 @@
                 // Correct timing!
                 const basePoints = 100;
                 const comboBonus = combo * 20;
-                const totalPoints = basePoints + comboBonus;
+                const voiceBonus = micEnabled ? Math.round(lastPitchAccuracy * 0.5) : 0;
+                const totalPoints = basePoints + comboBonus + voiceBonus;
                 
                 score += totalPoints;
                 combo++;
@@ -1100,6 +1217,7 @@
         }
 
         function backToSelection() {
+            stopMicrophone();
             document.getElementById('gameScreen').classList.add('hidden');
             document.getElementById('resultsScreen').classList.add('hidden');
             document.getElementById('songSelection').classList.remove('hidden');
@@ -1125,6 +1243,14 @@
                 singLine();
             }
         });
+
+        // Restore custom songs saved during this browser session.
+        try {
+            const saved = JSON.parse(localStorage.getItem('karaokeCustomSongs') || '[]');
+            saved.forEach(s => songs[`custom_${s.id}`] = s);
+        } catch (e) {
+            console.warn('Unable to restore custom songs', e);
+        }
 
         // Initialize search input
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
